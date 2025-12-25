@@ -1,0 +1,31 @@
+# R and RStudio files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Shiny
+rsconnect/
+*.log
+
+# Data backups (keep only the main pl_history.rds)
+pl_history_backup_*.rds
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*~
+*.swp
+*.swo
+
+# Environment variables (if you add any sensitive configs)
+.Renviron
+.env
