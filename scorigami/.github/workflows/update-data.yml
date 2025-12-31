@@ -37,20 +37,24 @@ jobs:
 
       - name: Install R dependencies
         run: |
-          install.packages(c('tidyverse', 'lubridate'))
+          install.packages(c('tidyverse', 'lubridate', 'rsconnect'))
         shell: Rscript {0}
 
       - name: Run data update script
-        run: Rscript update_data.R
+        run: |
+          cd scorigami
+          Rscript update_data.R
 
       - name: Check for changes
         id: verify_diff
         run: |
+          cd scorigami
           git diff --quiet pl_history.rds || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push if changed
         if: steps.verify_diff.outputs.changed == 'true'
         run: |
+          cd scorigami
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add pl_history.rds
@@ -59,6 +63,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Deploy to shinyapps.io
+        if: steps.verify_diff.outputs.changed == 'true'
+        run: |
+          cd scorigami
+          Rscript -e "
+            library(rsconnect)
+
+            # Configure shinyapps.io account
+            rsconnect::setAccountInfo(
+              name   = '${{ secrets.SHINYAPPS_ACCOUNT }}',
+              token  = '${{ secrets.SHINYAPPS_TOKEN }}',
+              secret = '${{ secrets.SHINYAPPS_SECRET }}'
+            )
+
+            # Deploy the app
+            rsconnect::deployApp(
+              appName = 'premier-league-scorigami',
+              account = '${{ secrets.SHINYAPPS_ACCOUNT }}',
+              forceUpdate = TRUE,
+              launch.browser = FALSE
+            )
+
+            cat('\n✅ Deployed to shinyapps.io\n')
+          "
+
       - name: Summary
         run: |
           echo "## 📊 Data Update Complete" >> $GITHUB_STEP_SUMMARY
@@ -66,7 +95,7 @@ jobs:
           echo "- **Triggered at:** $(date)" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.verify_diff.outputs.changed }}" == "true" ]; then
-            echo "- **Changes:** New data added" >> $GITHUB_STEP_SUMMARY
+            echo "- **Changes:** New data added and deployed" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Changes:** No new matches found" >> $GITHUB_STEP_SUMMARY
           fi
