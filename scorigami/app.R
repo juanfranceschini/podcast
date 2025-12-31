@@ -95,9 +95,12 @@ ui <- page_fluid(
       /* Typography */
       .stat-val { font-size: 3.5rem; font-weight: 800; line-height: 1; margin: 10px 0; }
       .stat-lbl { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: ", pl_text_mute, "; }
-      
+
       /* Table Search Input */
       .rt-search { background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.2) !important; color: white !important; border-radius: 6px; }
+
+      /* Plot Interactivity */
+      #scorigamiPlot { cursor: pointer; user-select: none; -webkit-user-select: none; }
     ")))
   ),
   
@@ -139,7 +142,14 @@ ui <- page_fluid(
   
   # --- CHART ---
   div(class = "pl-card", style = "padding: 20px; margin-bottom: 40px;",
-    plotOutput("scorigamiPlot", height = "850px")
+    plotOutput("scorigamiPlot", height = "850px", click = "plot_click"),
+    div(
+      style = paste0("text-align: center; margin-top: 15px; color: ", pl_text_mute, "; font-size: 0.85rem;"),
+      span(style = paste0("color: ", pl_magenta, "; font-weight: 700;"), "💡 TIP: "),
+      "Click any ",
+      span(style = paste0("color: ", pl_magenta, "; font-weight: 700;"), "magenta tile"),
+      " to view match details"
+    )
   ),
   
   # --- TABLE ---
@@ -166,17 +176,12 @@ server <- function(input, output, session) {
     if (input$season == "ALL-TIME (1993-Present)") return(pl_history)
     return(pl_history |> filter(Season == input$season))
   })
-  
-  # --- Stats ---
-  output$stat_matches <- renderText({ format(nrow(data_r()), big.mark = ",") })
-  output$stat_goals   <- renderText({ format(sum(data_r()$HG + data_r()$AG), big.mark = ",") })
-  output$stat_unique  <- renderText({ n_distinct(data_r()$Score) })
-  
-  # --- Plot (FIXED) ---
-  output$scorigamiPlot <- renderPlot({
+
+  # --- Grid Data (for plot and click handler) ---
+  grid_r <- reactive({
     df <- data_r()
     req(nrow(df) > 0)
-    
+
     counts <- df |> count(HG, AG, name = "n")
     grid   <- expand.grid(HG = 0:max_g, AG = 0:max_g) |>
       as_tibble() |>
@@ -188,22 +193,33 @@ server <- function(input, output, session) {
           n == 1 ~ "scorigami",
           n <= 6 ~ "rare",
           TRUE   ~ "common"
-        ),
-        label = ifelse(n == 0, "", as.character(n))
+        )
       )
-    
+    grid
+  })
+
+  # --- Stats ---
+  output$stat_matches <- renderText({ format(nrow(data_r()), big.mark = ",") })
+  output$stat_goals   <- renderText({ format(sum(data_r()$HG + data_r()$AG), big.mark = ",") })
+  output$stat_unique  <- renderText({ n_distinct(data_r()$Score) })
+  
+  # --- Plot (FIXED) ---
+  output$scorigamiPlot <- renderPlot({
+    grid <- grid_r()
+    req(nrow(grid) > 0)
+
+    grid <- grid |> mutate(label = ifelse(n == 0, "", as.character(n)))
+
     ggplot(grid, aes(x = AG, y = HG)) +
-      # --- FIX IS HERE ---
-      # Use 8-digit HEX code for transparency in R (#FFFFFF + 1A alpha = 10% opacity)
       geom_tile(aes(fill = type), color = pl_purple, linewidth = 3) +
-      
+
       scale_fill_manual(values = c(
         "empty"     = "transparent",
         "scorigami" = pl_magenta,
         "rare"      = pl_neon,
         "common"    = pl_white
       ), guide = "none") +
-      
+
       # Text
       geom_text(aes(label = label, color = type), family = "outfit", fontface = "bold", size = 10) +
       scale_color_manual(values = c(
@@ -212,11 +228,11 @@ server <- function(input, output, session) {
         "rare"      = pl_purple,
         "common"    = pl_purple
       ), guide = "none") +
-      
+
       scale_x_continuous(breaks = 0:max_g, position = "top") +
       scale_y_reverse(breaks = 0:max_g) +
       labs(x = "AWAY GOALS", y = "HOME GOALS") +
-      
+
       theme_minimal(base_family = "outfit") +
       theme(
         plot.background = element_rect(fill = "transparent", color = NA),
@@ -228,7 +244,116 @@ server <- function(input, output, session) {
       ) +
       coord_fixed(expand = FALSE)
   }, bg = "transparent")
-  
+
+  # --- Click Handler for Scorigami Tiles ---
+  observeEvent(input$plot_click, {
+    # Identify clicked tile
+    clicked <- nearPoints(grid_r(), input$plot_click,
+                         xvar = "AG", yvar = "HG",
+                         threshold = 10, maxpoints = 1)
+    req(nrow(clicked) == 1)
+
+    # Extract tile info
+    home_goals <- clicked$HG
+    away_goals <- clicked$AG
+    tile_type  <- clicked$type
+
+    # Only show modal for scorigami tiles
+    if (tile_type != "scorigami") return()
+
+    # Find match data
+    match_data <- data_r() |>
+      filter(HG == home_goals, AG == away_goals)
+    req(nrow(match_data) == 1)
+
+    # Build YouTube URL
+    yt_url <- paste0(
+      "https://www.youtube.com/results?search_query=",
+      URLencode(paste(match_data$Home, "vs", match_data$Away,
+                     format(match_data$Date, "%Y"), "highlights"))
+    )
+
+    # Show modal with match details
+    showModal(modalDialog(
+      title = div(
+        style = paste0("color:", pl_magenta, "; font-weight:800; font-size:1.5rem; letter-spacing:1px;"),
+        "⚡ SCORIGAMI MATCH"
+      ),
+
+      div(
+        style = "padding:10px;",
+
+        # Date badge
+        div(
+          style = paste0(
+            "display:inline-block; background:", pl_neon, "; color:", pl_purple,
+            "; padding:4px 12px; border-radius:6px; font-size:0.85rem; ",
+            "font-weight:700; margin-bottom:20px;"
+          ),
+          format(match_data$Date, "%B %d, %Y")
+        ),
+
+        # Match display (Home vs Away)
+        div(
+          style = "display:flex; align-items:center; justify-content:center; margin-bottom:20px; gap:15px;",
+
+          # Home Team
+          div(
+            style = "font-size:1.3rem; font-weight:700;",
+            match_data$Home
+          ),
+
+          # VS Separator
+          div(style = paste0("color:", pl_text_mute, "; font-size:1rem; font-weight:700;"), "VS"),
+
+          # Away Team
+          div(
+            style = "font-size:1.3rem; font-weight:700;",
+            match_data$Away
+          )
+        ),
+
+        # Final score badge (single score display)
+        div(
+          style = paste0(
+            "text-align:center; margin-bottom:20px; padding:15px; ",
+            "background:", pl_card_bg, "; border-radius:8px; ",
+            "border:2px solid ", pl_magenta
+          ),
+          div(style = paste0("color:", pl_text_mute, "; font-size:0.75rem; letter-spacing:2px; margin-bottom:8px;"), "FINAL SCORE"),
+          div(style = paste0("color:", pl_magenta, "; font-size:2.5rem; font-weight:900;"), match_data$Score)
+        ),
+
+        # YouTube button
+        div(
+          style = "text-align:center;",
+          tags$a(
+            href = yt_url,
+            target = "_blank",
+            style = paste0(
+              "display:inline-block; background:", pl_magenta,
+              "; color:", pl_white,
+              "; padding:14px 28px; border-radius:8px; ",
+              "text-decoration:none; font-weight:700; font-size:1rem; ",
+              "transition: opacity 0.2s ease; letter-spacing:1px;"
+            ),
+            onmouseover = "this.style.opacity='0.8'",
+            onmouseout = "this.style.opacity='1'",
+            "▶ WATCH HIGHLIGHTS"
+          )
+        )
+      ),
+
+      easyClose = TRUE,
+      footer = modalButton("Close")
+    ))
+  })
+
+  # --- Auto-close modal on season change ---
+  observeEvent(input$season, {
+    removeModal()
+  })
+
   # --- Table ---
   output$scorigamiTable <- renderReactable({
     df <- data_r()
