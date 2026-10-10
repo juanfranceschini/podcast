@@ -1,431 +1,244 @@
+# Premier League Scorigami — every scoreline since 1993: which happened once, which never.
+# Data: pl_history.rds, refreshed weekly by update_data.R (GitHub Actions).
+# The previous version of this app is in git history (commit b5049f5).
+
 library(shiny)
-library(tidyverse)
-library(lubridate)
-library(showtext)
-library(bslib)
-library(reactable)
-library(htmltools)
 
-# --- 1. SETUP & CONSTANTS ----------------------------------------------------
+`%||%` <- function(a, b) if (is.null(a) || !length(a) || identical(a, "")) b else a
 
-# Load Fonts
-font_add_google("Outfit", "outfit")
-showtext_auto()
+# ---- data -------------------------------------------------------------------------
+raw <- readRDS("pl_history.rds")
+d <- data.frame(
+  date = as.Date(raw$Date_Parsed %||% raw$Date),
+  home = raw$Home, away = raw$Away,
+  hg = as.integer(raw$HG), ag = as.integer(raw$AG)
+)
+d$season <- ifelse(as.integer(format(d$date, "%m")) >= 8, as.integer(format(d$date, "%Y")), as.integer(format(d$date, "%Y")) - 1L)
+d <- d[order(d$date, d$home), ]
 
-# --- DESIGN SYSTEM ---
-pl_purple    <- "#37003c"
-pl_magenta   <- "#EA00D9"
-pl_neon      <- "#00FF87"
-pl_white     <- "#FFFFFF"
-pl_text_mute <- "rgba(255, 255, 255, 0.6)"
-pl_card_bg   <- "rgba(40, 25, 60, 0.7)"
+season_label <- function(y) sprintf("%d-%02d", y, (y + 1) %% 100)
+latest_season <- max(d$season)
+in_progress <- sum(d$season == latest_season) < 380
+season_choices <- c("All-time" = "all", setNames(as.character(sort(unique(d$season), decreasing = TRUE)),
+  paste0(season_label(sort(unique(d$season), decreasing = TRUE)),
+         ifelse(sort(unique(d$season), decreasing = TRUE) == latest_season & in_progress, " (in progress)", ""))))
+teams <- sort(unique(c(d$home, d$away)))
+team_choices <- c("Every match (home vs away)" = "", setNames(teams, teams))
+updated_on <- max(d$date)
 
-max_g <- 10
+# First-ever occurrence of each scoreline (all-time, home-away order)
+d$key <- paste0(d$hg, "-", d$ag)
+firsts <- d[!duplicated(d$key), ]
+firsts$order <- seq_len(nrow(firsts))
+latest_first <- firsts[nrow(firsts), ]
 
-# --- DATA HELPERS ---
+fmt_date <- function(x) paste(as.integer(format(x, "%d")), format(x, "%b %Y")) # portable "7 Sep 2023"
+fmt_n <- function(x) format(x, big.mark = ",")
+ordinal <- function(n) paste0(n, if (n %% 100 %in% 11:13) "th" else c("th", "st", "nd", "rd", rep("th", 6))[n %% 10 + 1])
+yt <- function(m) paste0("https://www.youtube.com/results?search_query=",
+                         utils::URLencode(paste(m$home, m$away, m$hg, m$ag, format(m$date, "%Y"), "highlights"), reserved = TRUE))
+esc <- function(x) htmltools::htmlEscape(x)
 
-# 1. Load History (Cached)
-if (file.exists("pl_history.rds")) {
-  pl_history <- readRDS("pl_history.rds") |>
-    mutate(
-      Date = as.Date(Date_Parsed),
-      season_year = ifelse(month(Date) >= 8, year(Date), year(Date) - 1),
-      Season = paste0(season_year, "/", season_year + 1)
-    )
-} else {
-  pl_history <- tibble(Date = as.Date(character()), Season = character())
+# ---- view helpers -------------------------------------------------------------------
+
+# Matches in view, oriented as rows = first team's goals, cols = second team's goals
+view_data <- function(season, team) {
+  x <- if (season == "all") d else d[d$season == as.integer(season), ]
+  if (!nzchar(team)) {
+    x$r <- x$hg; x$c <- x$ag
+    return(x)
+  }
+  h <- x[x$home == team, ]; a <- x[x$away == team, ]
+  h$r <- h$hg; h$c <- h$ag
+  a$r <- a$ag; a$c <- a$hg
+  y <- rbind(h, a)
+  y[order(y$date), ]
 }
 
-# 2. Season Choices
-current_year <- 2025
-years_range <- current_year:1993
-seasons_choices <- c(
-  "ALL-TIME (1993-Present)",
-  map_chr(years_range, function(y) paste0(y, "/", y + 1))
-)
+# Four frequency bins for scorelines seen 2+ times, scaled to the view
+bin_breaks <- function(m) {
+  if (m < 2) return(c(2, Inf, Inf, Inf))
+  nice <- function(x) ifelse(x < 10, round(x), signif(x, 1))   # 2, 10, 50, 300…
+  b <- unique(pmax(2, nice(exp(seq(log(2), log(max(m, 3)), length.out = 5)))[1:4]))
+  c(b, rep(Inf, 4 - length(b)))
+}
+bin_of <- function(n, br) ifelse(n == 0, "never", ifelse(n == 1, "once", paste0("b", findInterval(n, br))))
 
-# Note: Current season data is included in pl_history.rds
-# and updated weekly via GitHub Actions (no live fetching needed)
+score_line <- function(m) sprintf("%s %d–%d %s", m$home, m$hg, m$ag, m$away)
 
-# --- 2. UI -------------------------------------------------------------------
+grid_html <- function(v, team) {
+  tab <- table(factor(v$r, 0:9), factor(v$c, 0:9))
+  maxg <- max(9, v$r, v$c)
+  if (maxg > 9) tab <- table(factor(v$r, 0:maxg), factor(v$c, 0:maxg))
+  br <- bin_breaks(max(tab))
+  total <- nrow(v)
+  rows_lbl <- if (nzchar(team)) paste(team, "goals") else "Home goals"
+  cols_lbl <- if (nzchar(team)) "Opponent goals" else "Away goals"
+  cells <- character()
+  for (r in 0:maxg) {
+    cells <- c(cells, sprintf('<span class="g__axis g__axis--row">%d</span>', r))
+    for (cc in 0:maxg) {
+      n <- tab[r + 1, cc + 1]
+      sub <- if (n > 0) v[v$r == r & v$c == cc, ] else NULL
+      tip <- if (n == 0) sprintf("%d–%d|Never happened%s", r, cc, if (nzchar(team)) paste(" for", team) else " in the Premier League")
+        else sprintf("%d–%d|%s %s (%.1f%%)|First: %s, %s|%s", r, cc, fmt_n(n), if (n == 1) "match" else "matches", 100 * n / total,
+                     fmt_date(sub$date[1]), score_line(sub[1, ]),
+                     if (n > 1) paste0("Latest: ", fmt_date(sub$date[n]), ", ", score_line(sub[n, ])) else "Happened exactly once: a scorigami")
+      cells <- c(cells, sprintf('<button class="g__cell g__cell--%s" type="button" data-score="%d-%d" data-tip="%s" aria-label="%d to %d: %s">%s</button>',
+        bin_of(n, br), r, cc, esc(tip), r, cc, if (n == 0) "never happened" else paste(n, "matches"), if (n > 0) fmt_n(n) else ""))
+    }
+  }
+  head <- paste0('<span class="g__corner"></span>', paste0(sprintf('<span class="g__axis g__axis--col">%d</span>', 0:maxg), collapse = ""))
+  legend_ranges <- function(i) { lo <- br[i]; hi <- if (i < 4 && is.finite(br[i + 1])) br[i + 1] - 1 else NA
+    if (!is.finite(lo)) return(NULL); if (is.na(hi)) paste0(fmt_n(lo), "+") else if (hi == lo) fmt_n(lo) else paste0(fmt_n(lo), "–", fmt_n(hi)) }
+  legend <- paste0(
+    '<span class="lg"><i class="g__cell--never"></i>Never</span>',
+    '<span class="lg"><i class="g__cell--once"></i>Once (scorigami)</span>',
+    paste0(unlist(lapply(1:4, function(i) { lab <- legend_ranges(i); if (is.null(lab)) NULL else sprintf('<span class="lg"><i class="g__cell--b%d"></i>%s</span>', i, lab) })), collapse = ""))
+  HTML(sprintf(
+    '<div class="g-wrap"><div class="g__ylabel">%s ↓</div><div class="g__xlabel">%s →</div>
+       <div class="g" style="--n:%d">%s%s</div></div><div class="legend" aria-label="Legend">%s</div>',
+    esc(rows_lbl), cols_lbl, maxg + 1, head, paste(cells, collapse = ""), legend))
+}
 
-theme_pl <- bs_theme(
-  bg = pl_purple,
-  fg = pl_white,
-  primary = pl_magenta,
-  base_font = font_google("Outfit"),
-  heading_font = font_google("Outfit")
-)
+timeline_html <- function() {
+  firsts$season <- ifelse(as.integer(format(firsts$date, "%m")) >= 8, as.integer(format(firsts$date, "%Y")), as.integer(format(firsts$date, "%Y")) - 1L)
+  all_s <- sort(unique(d$season))
+  n <- tabulate(match(firsts$season, all_s), length(all_s))
+  m <- max(n)
+  bars <- vapply(seq_along(all_s), function(i) {
+    new <- firsts[firsts$season == all_s[i], ]
+    tip <- if (n[i] == 0) sprintf("%s|No new scorelines", season_label(all_s[i]))
+           else sprintf("%s|%d new scoreline%s|%s", season_label(all_s[i]), n[i], if (n[i] == 1) "" else "s",
+                        paste(sprintf("%d–%d", new$hg, new$ag), collapse = ", "))
+    sprintf('<span class="tl__bar" data-tip="%s" style="--h:%.1f%%"><i></i><b>%s</b></span>', esc(tip), 100 * n[i] / m,
+            # label the first and last seasons and every 5th, skipping any too close to the ends
+            if (i == 1 || i == length(all_s) || (all_s[i] %% 5 == 0 && i > 3 && i < length(all_s) - 2)) substr(season_label(all_s[i]), 3, 7) else "")
+  }, "")
+  HTML(sprintf('<div class="tl" role="img" aria-label="New scorelines per season, from %d in 1993-94 to %d in %s">%s</div>',
+               n[1], n[length(n)], season_label(max(all_s)), paste(bars, collapse = "")))
+}
 
-ui <- page_fluid(
-  theme = theme_pl,
+# ---- UI -----------------------------------------------------------------------------------
+
+ui <- fluidPage(
   title = "Premier League Scorigami",
-  
+  lang = "en",
   tags$head(
-    tags$style(HTML(paste0("
-      body {
-        background: radial-gradient(circle at top right, #5c0064 0%, ", pl_purple, " 40%, #0f0a1e 100%);
-        min-height: 100vh;
-      }
-      .pl-card {
-        background: ", pl_card_bg, ";
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-        transition: border-color 0.3s ease;
-      }
-      .pl-card:hover { border-color: ", pl_magenta, "; }
-      
-      /* Input Styles */
-      .selectize-input {
-        background: rgba(0, 0, 0, 0.3) !important;
-        border: 1px solid ", pl_magenta, " !important;
-        color: ", pl_white, " !important;
-        font-weight: bold;
-        border-radius: 8px;
-      }
-      .selectize-dropdown {
-        background: ", pl_purple, ";
-        border: 1px solid ", pl_magenta, ";
-        color: ", pl_white, ";
-      }
-      
-      /* Typography */
-      .stat-val { font-size: 3.5rem; font-weight: 800; line-height: 1; margin: 10px 0; }
-      .stat-lbl { font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; color: ", pl_text_mute, "; }
+    tags$meta(name = "viewport", content = "width=device-width, initial-scale=1"),
+    tags$meta(name = "description", content = "Every Premier League scoreline since 1993. Which have happened only once, and which have never happened at all?"),
+    tags$link(rel = "icon", href = "favicon.svg", type = "image/svg+xml"),
+    tags$link(rel = "preconnect", href = "https://fonts.googleapis.com"),
+    tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap"),
+    tags$link(rel = "stylesheet", href = "scorigami.css"),
+    tags$script(src = "scorigami.js")
+  ),
 
-      /* Table Search Input */
-      .rt-search { background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.2) !important; color: white !important; border-radius: 6px; }
+  tags$header(class = "hero",
+    div(class = "hero__mark", `aria-hidden` = "true", HTML(paste(rep("<i></i>", 9), collapse = ""))),
+    p(class = "eyebrow", sprintf("Premier League · %d seasons · %s matches", length(unique(d$season)), fmt_n(nrow(d)))),
+    h1("SCORIGAMI"),
+    p(class = "lede", "Every scoreline since 1993. Which have happened only once, and which have ", tags$em("never"), " happened at all?"),
+    div(class = "latest",
+      span(class = "latest__tag", "Latest scorigami"),
+      span(class = "latest__score", sprintf("%s %d–%d %s", latest_first$home, latest_first$hg, latest_first$ag, latest_first$away)),
+      span(class = "latest__meta", sprintf("%s · the %s different scoreline in Premier League history", fmt_date(latest_first$date), ordinal(latest_first$order))))
+  ),
 
-      /* Plot Interactivity */
-      #scorigamiPlot { cursor: pointer; user-select: none; -webkit-user-select: none; }
-    ")))
+  tags$section(class = "controls", `aria-label` = "Filters",
+    selectInput("season", "Season", choices = season_choices, selected = "all"),
+    selectizeInput("team", "Team view", choices = team_choices, selected = "",
+                   options = list(placeholder = "Every match (home vs away)"))
   ),
-  
-  # --- HEADER ---
-  div(
-    style = "text-align: center; padding: 40px 0 20px 0;",
-    img(src = "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg", height = "80px", style = "margin-bottom: 20px; filter: brightness(0) invert(1);"),
-    h1("SCORIGAMI", style = "font-weight: 900; letter-spacing: -2px; font-size: 4rem; margin: 0; line-height: 0.9;"),
-    p("THE OFFICIAL ARCHIVE", style = paste0("color: ", pl_neon, "; letter-spacing: 6px; font-weight: 700; margin-top: 10px; font-size: 1rem;")),
-    
-    div(
-      style = "max-width: 320px; margin: 30px auto;",
-      selectInput("season", NULL, choices = seasons_choices, selected = "ALL-TIME (1993-Present)")
-    )
+
+  uiOutput("stats"),
+
+  div(class = "main",
+    tags$section(class = "card card--grid", `aria-label` = "Scoreline grid",
+      div(class = "card__head", h2(textOutput("grid_title", inline = TRUE)), p(class = "hint", "Hover a square for the story, click it for every match.")),
+      uiOutput("grid")),
+    tags$aside(class = "card card--detail", `aria-live` = "polite", uiOutput("detail"))
   ),
-  
-  # --- STATS ROW ---
-  fluidRow(
-    style = "margin-bottom: 30px;",
-    column(4, 
-      div(class = "pl-card p-4 text-center",
-        div(class = "stat-lbl", "Matches Played"),
-        div(class = "stat-val", style = paste0("color:", pl_white), textOutput("stat_matches"))
-      )
-    ),
-    column(4, 
-      div(class = "pl-card p-4 text-center",
-        div(class = "stat-lbl", "Total Goals"),
-        div(class = "stat-val", style = paste0("color:", pl_neon), textOutput("stat_goals"))
-      )
-    ),
-    column(4, 
-      div(class = "pl-card p-4 text-center",
-        div(class = "stat-lbl", "Unique Scores"),
-        div(class = "stat-val", style = paste0("color:", pl_magenta), textOutput("stat_unique"))
-      )
-    )
-  ),
-  
-  # --- CHART ---
-  div(class = "pl-card", style = "padding: 20px; margin-bottom: 40px;",
-    plotOutput("scorigamiPlot", height = "850px", click = "plot_click"),
-    div(
-      style = paste0("text-align: center; margin-top: 15px; color: ", pl_text_mute, "; font-size: 0.85rem;"),
-      span(style = paste0("color: ", pl_magenta, "; font-weight: 700;"), "💡 TIP: "),
-      "Click any ",
-      span(style = paste0("color: ", pl_magenta, "; font-weight: 700;"), "magenta tile"),
-      " to view match details"
-    )
-  ),
-  
-  # --- TABLE ---
-  div(class = "pl-card", style = "padding: 30px; margin-bottom: 50px;",
-    div(
-      style = "border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;",
-      h3("MATCH REGISTRY", style = "font-weight: 800; margin: 0; letter-spacing: 1px;"),
-      span("Singular occurrences in selected history", style = paste0("color:", pl_text_mute, "; font-size: 0.9rem;"))
-    ),
-    reactableOutput("scorigamiTable")
-  )
+
+  tags$section(class = "card card--timeline", `aria-label` = "Timeline",
+    div(class = "card__head", h2("When each scoreline first happened"),
+        p(class = "hint", sprintf("New scorelines per season. %d in the first season alone; just %d since 2015.",
+                                  sum(format(firsts$date, "%Y-%m") < "1994-08"), sum(firsts$date >= as.Date("2015-08-01"))))),
+    timeline_html()),
+
+  div(id = "tip", class = "tip", role = "tooltip", hidden = NA),
+
+  tags$footer(class = "foot",
+    p("Built by ", a(href = "https://jafranceschini.quarto.pub/juan-franceschini-lab/", target = "_blank", rel = "noopener", "Juan Franceschini"),
+      " · a White Belt project · ", a(href = "https://www.linkedin.com/in/juan-franceschini-uy/", target = "_blank", rel = "noopener", "LinkedIn")),
+    p(class = "foot__small", sprintf("Results from football-data.co.uk, updated weekly (latest match: %s). Scoreline order is home–away, or the chosen team's goals first in team view. Not affiliated with the Premier League.", fmt_date(updated_on))))
 )
 
-# --- 3. SERVER ---------------------------------------------------------------
+# ---- server ----------------------------------------------------------------------------------
 
 server <- function(input, output, session) {
-  
-  # --- Data Logic ---
-  data_r <- reactive({
-    req(input$season)
+  score <- reactiveVal(paste0(latest_first$hg, "-", latest_first$ag))
 
-    # Use cached data only (updated weekly via GitHub Actions)
-    # No live fetching to avoid double-counting
-    if (input$season == "ALL-TIME (1993-Present)") return(pl_history)
-    return(pl_history |> filter(Season == input$season))
+  observeEvent(TRUE, once = TRUE, {
+    q <- parseQueryString(isolate(session$clientData$url_search))
+    if (!is.null(q$season) && q$season %in% season_choices) updateSelectInput(session, "season", selected = q$season)
+    if (!is.null(q$team) && q$team %in% teams) updateSelectizeInput(session, "team", selected = q$team)
+    if (!is.null(q$score) && grepl("^[0-9]{1,2}-[0-9]{1,2}$", q$score)) score(q$score)
   })
 
-  # --- Grid Data (for plot and click handler) ---
-  grid_r <- reactive({
-    df <- data_r()
-    req(nrow(df) > 0)
+  observeEvent(input$cell, score(input$cell))
+  observe(updateQueryString(paste0("?season=", input$season %||% "all",
+                                   if (nzchar(input$team %||% "")) paste0("&team=", utils::URLencode(input$team, reserved = TRUE)) else "",
+                                   "&score=", score()), mode = "replace"))
 
-    counts <- df |> count(HG, AG, name = "n")
-    grid   <- expand.grid(HG = 0:max_g, AG = 0:max_g) |>
-      as_tibble() |>
-      left_join(counts, by = c("HG", "AG")) |>
-      mutate(
-        n = replace_na(n, 0),
-        type = case_when(
-          n == 0 ~ "empty",
-          n == 1 ~ "scorigami",
-          n <= 6 ~ "rare",
-          TRUE   ~ "common"
-        )
-      )
-    grid
+  view <- reactive(view_data(input$season %||% "all", input$team %||% ""))
+
+  output$grid_title <- renderText({
+    s <- if ((input$season %||% "all") == "all") "All-time" else season_label(as.integer(input$season))
+    if (nzchar(input$team %||% "")) paste(input$team, "·", s) else paste("Every scoreline ·", s)
   })
 
-  # --- Stats ---
-  output$stat_matches <- renderText({ format(nrow(data_r()), big.mark = ",") })
-  output$stat_goals   <- renderText({ format(sum(data_r()$HG + data_r()$AG), big.mark = ",") })
-  output$stat_unique  <- renderText({ n_distinct(data_r()$Score) })
-  
-  # --- Plot (FIXED) ---
-  output$scorigamiPlot <- renderPlot({
-    grid <- grid_r()
-    req(nrow(grid) > 0)
-
-    grid <- grid |> mutate(label = ifelse(n == 0, "", as.character(n)))
-
-    ggplot(grid, aes(x = AG, y = HG)) +
-      geom_tile(aes(fill = type), color = pl_purple, linewidth = 3) +
-
-      scale_fill_manual(values = c(
-        "empty"     = "transparent",
-        "scorigami" = pl_magenta,
-        "rare"      = pl_neon,
-        "common"    = pl_white
-      ), guide = "none") +
-
-      # Text
-      geom_text(aes(label = label, color = type), family = "outfit", fontface = "bold", size = 10) +
-      scale_color_manual(values = c(
-        "empty"     = "transparent",
-        "scorigami" = pl_white,
-        "rare"      = pl_purple,
-        "common"    = pl_purple
-      ), guide = "none") +
-
-      scale_x_continuous(breaks = 0:max_g, position = "top") +
-      scale_y_reverse(breaks = 0:max_g) +
-      labs(x = "AWAY GOALS", y = "HOME GOALS") +
-
-      theme_minimal(base_family = "outfit") +
-      theme(
-        plot.background = element_rect(fill = "transparent", color = NA),
-        panel.background = element_rect(fill = "transparent", color = NA),
-        panel.grid = element_blank(),
-        axis.text = element_text(color = pl_white, size = 20, face = "bold"),
-        axis.title = element_text(color = pl_neon, size = 30, face = "bold", margin = margin(15,15,15,15)),
-        axis.ticks = element_blank()
-      ) +
-      coord_fixed(expand = FALSE)
-  }, bg = "transparent")
-
-  # --- Click Handler for Scorigami Tiles ---
-  observeEvent(input$plot_click, {
-    # Identify clicked tile
-    clicked <- nearPoints(grid_r(), input$plot_click,
-                         xvar = "AG", yvar = "HG",
-                         threshold = 10, maxpoints = 1)
-    req(nrow(clicked) == 1)
-
-    # Extract tile info
-    home_goals <- clicked$HG
-    away_goals <- clicked$AG
-    tile_type  <- clicked$type
-
-    # Only show modal for scorigami tiles
-    if (tile_type != "scorigami") return()
-
-    # Find match data
-    match_data <- data_r() |>
-      filter(HG == home_goals, AG == away_goals)
-    req(nrow(match_data) == 1)
-
-    # Build YouTube URL
-    yt_url <- paste0(
-      "https://www.youtube.com/results?search_query=",
-      URLencode(paste(match_data$Home, "vs", match_data$Away,
-                     format(match_data$Date, "%Y"), "highlights"))
-    )
-
-    # Show modal with match details
-    showModal(modalDialog(
-      title = div(
-        style = paste0("color:", pl_magenta, "; font-weight:800; font-size:1.5rem; letter-spacing:1px;"),
-        "⚡ SCORIGAMI MATCH"
-      ),
-
-      div(
-        style = "padding:10px;",
-
-        # Date badge
-        div(
-          style = paste0(
-            "display:inline-block; background:", pl_neon, "; color:", pl_purple,
-            "; padding:4px 12px; border-radius:6px; font-size:0.85rem; ",
-            "font-weight:700; margin-bottom:20px;"
-          ),
-          format(match_data$Date, "%B %d, %Y")
-        ),
-
-        # Match display (Home vs Away)
-        div(
-          style = "display:flex; align-items:center; justify-content:center; margin-bottom:20px; gap:15px;",
-
-          # Home Team
-          div(
-            style = "font-size:1.3rem; font-weight:700;",
-            match_data$Home
-          ),
-
-          # VS Separator
-          div(style = paste0("color:", pl_text_mute, "; font-size:1rem; font-weight:700;"), "VS"),
-
-          # Away Team
-          div(
-            style = "font-size:1.3rem; font-weight:700;",
-            match_data$Away
-          )
-        ),
-
-        # Final score badge (single score display)
-        div(
-          style = paste0(
-            "text-align:center; margin-bottom:20px; padding:15px; ",
-            "background:", pl_card_bg, "; border-radius:8px; ",
-            "border:2px solid ", pl_magenta
-          ),
-          div(style = paste0("color:", pl_text_mute, "; font-size:0.75rem; letter-spacing:2px; margin-bottom:8px;"), "FINAL SCORE"),
-          div(style = paste0("color:", pl_magenta, "; font-size:2.5rem; font-weight:900;"), match_data$Score)
-        ),
-
-        # YouTube button
-        div(
-          style = "text-align:center;",
-          tags$a(
-            href = yt_url,
-            target = "_blank",
-            style = paste0(
-              "display:inline-block; background:", pl_magenta,
-              "; color:", pl_white,
-              "; padding:14px 28px; border-radius:8px; ",
-              "text-decoration:none; font-weight:700; font-size:1rem; ",
-              "transition: opacity 0.2s ease; letter-spacing:1px;"
-            ),
-            onmouseover = "this.style.opacity='0.8'",
-            onmouseout = "this.style.opacity='1'",
-            "▶ WATCH HIGHLIGHTS"
-          )
-        )
-      ),
-
-      easyClose = TRUE,
-      footer = modalButton("Close")
-    ))
+  output$stats <- renderUI({
+    v <- view(); n <- nrow(v)
+    k <- table(paste0(v$r, "-", v$c))
+    tile <- function(lbl, val, sub = NULL) div(class = "stat", span(class = "stat__lbl", lbl), span(class = "stat__val", val), if (!is.null(sub)) span(class = "stat__sub", sub))
+    div(class = "stats",
+      tile("Matches", fmt_n(n)),
+      tile("Goals per game", if (n) sprintf("%.2f", mean(v$r + v$c)) else "–"),
+      tile("Different scorelines", length(k)),
+      tile("Happened once", sum(k == 1), "scorigamis in this view"))
   })
 
-  # --- Auto-close modal on season change ---
-  observeEvent(input$season, {
-    removeModal()
+  output$grid <- renderUI({
+    v <- view()
+    if (!nrow(v)) return(p(class = "empty", "No matches for this team in this season."))
+    grid_html(v, input$team %||% "")
   })
 
-  # --- Table ---
-  output$scorigamiTable <- renderReactable({
-    df <- data_r()
-    req(nrow(df) > 0)
-    
-    tbl_data <- df |>
-      group_by(Score) |>
-      mutate(Count = n()) |>
-      ungroup() |>
-      filter(Count == 1) |>
-      select(Date, Home, Away, Score) |>
-      arrange(desc(Date)) |>
-      mutate(
-        Year = year(Date),
-        SeasonStr = ifelse(month(Date) >= 8, paste0(Year, "-", substr(Year+1, 3, 4)), paste0(Year-1, "-", substr(Year, 3, 4))),
-        Details = NA 
-      )
-    
-    reactable(
-      tbl_data,
-      theme = reactableTheme(
-        backgroundColor = "transparent",
-        color = pl_white,
-        borderColor = "rgba(255,255,255,0.1)",
-        stripedColor = "rgba(255,255,255,0.05)",
-        highlightColor = "rgba(234, 0, 217, 0.2)",
-        inputStyle = list(backgroundColor = "rgba(0,0,0,0.5)", color = pl_white)
-      ),
-      columns = list(
-        Year = colDef(show = FALSE),
-        SeasonStr = colDef(show = FALSE),
-        
-        Date = colDef(
-          name = "DATE",
-          minWidth = 120,
-          style = list(color = pl_text_mute),
-          cell = function(value) {
-            format(value, "%b-%d %Y")
-          }
-        ),
-        Home = colDef(name = "HOME", minWidth = 150, style = list(fontWeight = "bold")),
-        Away = colDef(name = "AWAY", minWidth = 150, style = list(fontWeight = "bold")),
-        
-        Score = colDef(
-          name = "SCORE", 
-          align = "center",
-          width = 100,
-          style = list(color = pl_magenta, fontWeight = "800", fontSize = "1.2rem")
-        ),
-        
-        Details = colDef(
-          name = "ACTIONS",
-          sortable = FALSE,
-          filterable = FALSE,
-          width = 120,
-          align = "center",
-          cell = function(value, index) {
-            row <- tbl_data[index, ]
-            yt_u <- paste0("https://www.youtube.com/results?search_query=", URLencode(paste(row$Home, "vs", row$Away, format(row$Date, "%Y"), "highlights")))
-
-            tags$a(href = yt_u, target = "_blank", style = "text-decoration: none;",
-              div(style = paste0("background:", pl_neon, "; color:", pl_purple, "; padding:6px 14px; border-radius:6px; font-weight:700; font-size:0.8rem; display: inline-block;"), "▶ WATCH")
-            )
-          }
-        )
-      ),
-      searchable = TRUE,
-      pagination = FALSE,
-      height = "600px",
-      striped = TRUE,
-      highlight = TRUE
-    )
+  output$detail <- renderUI({
+    v <- view(); team <- input$team %||% ""
+    parts <- as.integer(strsplit(score(), "-")[[1]])
+    m <- v[v$r == parts[1] & v$c == parts[2], ]
+    m <- m[order(m$date, decreasing = TRUE), ]
+    heading <- div(class = "detail__head",
+      span(class = "detail__score", sprintf("%d–%d", parts[1], parts[2])),
+      span(class = "detail__count", if (!nrow(m)) "Never happened" else if (nrow(m) == 1) "Happened once" else paste(fmt_n(nrow(m)), "matches")))
+    if (!nrow(m)) {
+      return(tagList(heading, p(class = "detail__never",
+        if (nzchar(team)) sprintf("%s has never finished a match %d–%d in this view.", team, parts[1], parts[2])
+        else sprintf("No Premier League match has ever ended %d–%d%s. Yet.", parts[1], parts[2], if ((input$season %||% "all") == "all") "" else " this season"))))
+    }
+    first <- m[nrow(m), ]
+    shown <- head(m, 40)
+    rows <- vapply(seq_len(nrow(shown)), function(i) {
+      x <- shown[i, ]
+      sprintf('<li><span class="mt__date">%s<small>%s</small></span><span class="mt__teams">%s <b>%d–%d</b> %s</span><a class="mt__yt" href="%s" target="_blank" rel="noopener" aria-label="Search highlights for %s">▶</a></li>',
+              fmt_date(x$date), season_label(x$season), esc(x$home), x$hg, x$ag, esc(x$away), yt(x), esc(score_line(x)))
+    }, "")
+    tagList(heading,
+      if (nrow(m) > 1) p(class = "detail__first", sprintf("First: %s, %s", fmt_date(first$date), score_line(first))),
+      HTML(sprintf('<ol class="mt">%s</ol>', paste(rows, collapse = ""))),
+      if (nrow(m) > 40) p(class = "detail__more", sprintf("Showing the latest 40 of %s.", fmt_n(nrow(m)))))
   })
 }
 

@@ -30,7 +30,7 @@ jobs:
 
       - name: Install R dependencies
         run: |
-          install.packages(c('dplyr', 'tidyr', 'readr', 'purrr', 'stringr', 'ggplot2', 'lubridate', 'rsconnect'), repos = 'https://cloud.r-project.org', dependencies = TRUE)
+          install.packages(c('dplyr', 'readr', 'lubridate', 'shiny', 'rsconnect'), repos = 'https://cloud.r-project.org')
         shell: Rscript {0}
 
       - name: Run data update script
@@ -71,7 +71,9 @@ jobs:
             )
 
             # Deploy the app
+            # Upload only what the app needs (no backups or docs)
             rsconnect::deployApp(
+              appFiles = c('app.R', 'pl_history.rds', list.files('www', full.names = TRUE)),
               appName = 'premier-league-scorigami',
               account = '${{ secrets.SHINYAPPS_ACCOUNT }}',
               forceUpdate = TRUE,

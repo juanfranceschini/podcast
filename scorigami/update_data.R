@@ -1,123 +1,86 @@
 #!/usr/bin/env Rscript
-# Data Update Script for Premier League Scorigami
-# Fetches current season data and updates the cache
-# Run this weekly to keep data fresh
+# Data update for Premier League Scorigami. Run weekly (GitHub Actions) or by hand.
+#
+# Each run refetches the PREVIOUS and CURRENT seasons from football-data.co.uk and
+# replaces them wholesale, so a season's final weeks are picked up even after the
+# August rollover. The current season is worked out from today's date.
+# Safety checks stop the run (and leave pl_history.rds untouched) if anything looks off.
 
-library(tidyverse)
-library(lubridate)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
+  library(lubridate)
+})
 
-cat("🔄 Starting data update...\n")
-
-# --- Configuration ---
-current_year <- 2025  # Update this each August for new season
 history_file <- "pl_history.rds"
-backup_file <- paste0("pl_history_backup_", format(Sys.Date(), "%Y%m%d"), ".rds")
 
-# --- Helper Function ---
-fetch_season_data <- function(year) {
-  y1 <- substr(year, 3, 4)
-  y2 <- substr(year + 1, 3, 4)
-  url <- paste0("https://www.football-data.co.uk/mmz4281/", y1, y2, "/E0.csv")
+season_of <- function(date) ifelse(month(date) >= 8, year(date), year(date) - 1)
+current_season <- season_of(Sys.Date())
+seasons_to_fetch <- c(current_season - 1, current_season)
 
-  cat(sprintf("  Fetching %s/%s season from %s\n", year, year + 1, url))
-
-  tryCatch({
-    df <- read_csv(url, show_col_types = FALSE) %>%
-      mutate(Date = parse_date_time(Date, orders = c("dmy", "dmY", "mdy", "ymd"))) %>%
-      transmute(
-        Date  = as_date(Date),
-        HomeTeam,
-        AwayTeam,
-        FTHG  = as.integer(FTHG),
-        FTAG  = as.integer(FTAG),
-        Home  = HomeTeam,
-        Away  = AwayTeam,
-        HG    = FTHG,
-        AG    = FTAG,
-        Score = paste0(HG, "-", AG)
-      ) %>%
-      filter(!is.na(Date), !is.na(HG), !is.na(AG))
-
-    cat(sprintf("  ✅ Successfully fetched %d matches\n", nrow(df)))
-    return(df)
-  }, error = function(e) {
-    cat(sprintf("  ⚠️  Failed to fetch: %s\n", e$message))
-    return(NULL)
+fetch_season <- function(start_year) {
+  code <- paste0(substr(start_year, 3, 4), substr(start_year + 1, 3, 4))
+  url <- paste0("https://www.football-data.co.uk/mmz4281/", code, "/E0.csv")
+  cat(sprintf("  Fetching %d/%d from %s\n", start_year, start_year + 1, url))
+  df <- tryCatch(read_csv(url, show_col_types = FALSE, progress = FALSE), error = function(e) {
+    cat(sprintf("  ⚠️  Could not fetch: %s\n", conditionMessage(e))); NULL
   })
+  if (is.null(df) || !nrow(df)) return(NULL)
+  df |>
+    transmute(Date = as_date(parse_date_time(Date, orders = c("dmy", "dmY"))),
+              Home = HomeTeam, Away = AwayTeam,
+              HG = as.integer(FTHG), AG = as.integer(FTAG)) |>
+    filter(!is.na(Date), !is.na(HG), !is.na(AG)) |>
+    filter(season_of(Date) == start_year)
 }
 
-# --- Load existing historical data ---
-if (file.exists(history_file)) {
-  cat(sprintf("📂 Loading existing data from %s\n", history_file))
-  pl_history <- readRDS(history_file)
+finish <- function(d) {
+  d |>
+    mutate(Score = paste0(HG, "-", AG),
+           HomeTeam = Home, AwayTeam = Away, FTHG = HG, FTAG = AG,   # columns older app versions read
+           Date_Parsed = Date,
+           season_year = season_of(Date),
+           Season = paste0(season_year, "/", season_year + 1)) |>
+    arrange(Date, Home)
+}
 
-  # Ensure Date column exists (use Date_Parsed if Date doesn't exist)
-  if (!"Date" %in% names(pl_history) && "Date_Parsed" %in% names(pl_history)) {
-    pl_history <- pl_history %>% mutate(Date = Date_Parsed)
-  }
+cat("🔄 Premier League data update\n")
+old <- if (file.exists(history_file)) readRDS(history_file) else tibble()
+if (nrow(old)) {
+  old <- old |> mutate(Date = as_date(if ("Date_Parsed" %in% names(old)) Date_Parsed else Date))
+  cat(sprintf("📂 %s matches on file, latest %s\n", format(nrow(old), big.mark = ","), max(old$Date)))
+}
 
-  # Create backup
-  cat(sprintf("💾 Creating backup: %s\n", backup_file))
-  saveRDS(pl_history, backup_file)
+fresh <- lapply(seasons_to_fetch, fetch_season)
+names(fresh) <- seasons_to_fetch
+fetched <- bind_rows(fresh)
+if (!nrow(fetched)) { cat("⚠️  Nothing fetched; data left unchanged.\n"); quit(status = 0) }
 
-  # Get the latest date in historical data
-  latest_historical_date <- max(pl_history$Date, na.rm = TRUE)
-  cat(sprintf("  Latest historical match: %s\n", latest_historical_date))
+# Replace only the seasons we successfully fetched
+replaced <- as.integer(names(Filter(function(x) !is.null(x) && nrow(x) > 0, fresh)))
+keep <- if (nrow(old)) old |> filter(!season_of(Date) %in% replaced) |> select(Date, Home, Away, HG, AG) else tibble()
+updated <- finish(bind_rows(keep, fetched))
 
+# ---- Safety checks -------------------------------------------------------------
+counts <- updated |> count(season_year)
+complete <- counts |> filter(season_year < current_season)
+expected <- ifelse(complete$season_year <= 1994, 462, 380)
+bad <- complete[complete$n != expected, ]
+dups <- updated |> count(Date, Home, Away) |> filter(n > 1)
+problems <- c(
+  if (nrow(bad)) paste("unexpected match counts:", paste0(bad$season_year, "=", bad$n, collapse = ", ")),
+  if (nrow(dups)) paste(nrow(dups), "duplicate matches"),
+  if (nrow(old) && nrow(updated) < nrow(old)) sprintf("would shrink the data (%d -> %d)", nrow(old), nrow(updated))
+)
+if (length(problems)) {
+  cat("❌ Not saving:", paste(problems, collapse = "; "), "\n")
+  quit(status = 1)
+}
+
+if (nrow(old) && identical(nrow(old), nrow(updated)) && max(old$Date) == max(updated$Date)) {
+  cat("ℹ️  No new matches. Data is up to date.\n")
 } else {
-  cat("⚠️  No existing history file found. Creating new dataset from scratch...\n")
-  pl_history <- tibble()
-  latest_historical_date <- as.Date("1993-01-01")
+  saveRDS(updated, history_file)
+  cat(sprintf("✅ Saved %s matches (+%d), latest %s\n", format(nrow(updated), big.mark = ","),
+              nrow(updated) - nrow(old), max(updated$Date)))
 }
-
-# --- Fetch current season ---
-cat(sprintf("\n🔽 Fetching current season (%s/%s)...\n", current_year, current_year + 1))
-current_season <- fetch_season_data(current_year)
-
-if (!is.null(current_season) && nrow(current_season) > 0) {
-
-  # Check if we have new data
-  new_matches <- current_season %>%
-    filter(Date > latest_historical_date)
-
-  if (nrow(new_matches) > 0) {
-    cat(sprintf("  ✨ Found %d new matches to add\n", nrow(new_matches)))
-
-    # Calculate current season year (e.g., 2024 for the 2024/2025 season)
-    current_season_year <- current_year - 1
-
-    # Combine with historical data, removing any duplicates from current season
-    updated_data <- pl_history %>%
-      # Remove any existing current season data to avoid duplicates
-      # Season year logic: if month >= 8, season_year = year; else season_year = year - 1
-      filter(!(ifelse(month(Date) >= 8, year(Date), year(Date) - 1) == current_season_year)) %>%
-      # Add fresh current season data
-      bind_rows(current_season) %>%
-      arrange(Date)
-
-    # Add season labels and ensure Date_Parsed exists
-    updated_data <- updated_data %>%
-      mutate(
-        Date_Parsed = Date,
-        season_year = ifelse(month(Date) >= 8, year(Date), year(Date) - 1),
-        Season = paste0(season_year, "/", season_year + 1)
-      )
-
-    # Save updated data
-    cat(sprintf("\n💾 Saving updated data (%d total matches)...\n", nrow(updated_data)))
-    saveRDS(updated_data, history_file)
-
-    cat("✅ Update complete!\n")
-    cat(sprintf("   Total matches: %s\n", format(nrow(updated_data), big.mark = ",")))
-    cat(sprintf("   Latest match: %s\n", max(updated_data$Date)))
-    cat(sprintf("   New matches added: %d\n", nrow(new_matches)))
-
-  } else {
-    cat("  ℹ️  No new matches found. Data is up to date.\n")
-  }
-
-} else {
-  cat("⚠️  Could not fetch current season data. Historical data remains unchanged.\n")
-}
-
-cat("\n🎉 Data update process finished!\n")
