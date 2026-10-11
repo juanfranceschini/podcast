@@ -41,18 +41,16 @@ esc <- function(x) htmltools::htmlEscape(x)
 
 # ---- view helpers -------------------------------------------------------------------
 
-# Matches in view, oriented as rows = first team's goals, cols = second team's goals
-view_data <- function(season, team) {
+# Matches in view. Every view uses the same axes: rows = home goals, cols = away goals.
+# A team view only filters the matches (optionally to its home or away games).
+view_data <- function(season, team, venue = "both") {
   x <- if (season == "all") d else d[d$season == as.integer(season), ]
-  if (!nzchar(team)) {
-    x$r <- x$hg; x$c <- x$ag
-    return(x)
+  if (nzchar(team)) {
+    keep <- switch(venue, home = x$home == team, away = x$away == team, x$home == team | x$away == team)
+    x <- x[keep, ]
   }
-  h <- x[x$home == team, ]; a <- x[x$away == team, ]
-  h$r <- h$hg; h$c <- h$ag
-  a$r <- a$ag; a$c <- a$hg
-  y <- rbind(h, a)
-  y[order(y$date), ]
+  x$r <- x$hg; x$c <- x$ag
+  x
 }
 
 # Four frequency bins for scorelines seen 2+ times, scaled to the view
@@ -72,8 +70,7 @@ grid_html <- function(v, team) {
   if (maxg > 9) tab <- table(factor(v$r, 0:maxg), factor(v$c, 0:maxg))
   br <- bin_breaks(max(tab))
   total <- nrow(v)
-  rows_lbl <- if (nzchar(team)) paste(team, "goals") else "Home goals"
-  cols_lbl <- if (nzchar(team)) "Opponent goals" else "Away goals"
+  rows_lbl <- "Home goals"; cols_lbl <- "Away goals"
   cells <- character()
   for (r in 0:maxg) {
     cells <- c(cells, sprintf('<span class="g__axis g__axis--row">%d</span>', r))
@@ -148,7 +145,9 @@ ui <- fluidPage(
   tags$section(class = "controls", `aria-label` = "Filters",
     selectInput("season", "Season", choices = season_choices, selected = "all"),
     selectizeInput("team", "Team view", choices = team_choices, selected = "",
-                   options = list(placeholder = "Every match (home vs away)"))
+                   options = list(placeholder = "Every match (home vs away)")),
+    conditionalPanel("input.team && input.team !== ''", class = "venue",
+      radioButtons("venue", "Venue", inline = TRUE, choices = c("Both" = "both", "Home" = "home", "Away" = "away")))
   ),
 
   uiOutput("stats"),
@@ -171,7 +170,7 @@ ui <- fluidPage(
   tags$footer(class = "foot",
     p("Built by ", a(href = "https://jafranceschini.quarto.pub/juan-franceschini-lab/", target = "_blank", rel = "noopener", "Juan Franceschini"),
       " · a White Belt project · ", a(href = "https://www.linkedin.com/in/juan-franceschini-uy/", target = "_blank", rel = "noopener", "LinkedIn")),
-    p(class = "foot__small", sprintf("Results from football-data.co.uk, updated weekly (latest match: %s). Scoreline order is home–away, or the chosen team's goals first in team view. Not affiliated with the Premier League.", fmt_date(updated_on))))
+    p(class = "foot__small", sprintf("Results from football-data.co.uk, updated weekly (latest match: %s). Scorelines are always home–away. Not affiliated with the Premier League.", fmt_date(updated_on))))
 )
 
 # ---- server ----------------------------------------------------------------------------------
@@ -183,19 +182,22 @@ server <- function(input, output, session) {
     q <- parseQueryString(isolate(session$clientData$url_search))
     if (!is.null(q$season) && q$season %in% season_choices) updateSelectInput(session, "season", selected = q$season)
     if (!is.null(q$team) && q$team %in% teams) updateSelectizeInput(session, "team", selected = q$team)
+    if (!is.null(q$venue) && q$venue %in% c("both", "home", "away")) updateRadioButtons(session, "venue", selected = q$venue)
     if (!is.null(q$score) && grepl("^[0-9]{1,2}-[0-9]{1,2}$", q$score)) score(q$score)
   })
 
   observeEvent(input$cell, score(input$cell))
   observe(updateQueryString(paste0("?season=", input$season %||% "all",
-                                   if (nzchar(input$team %||% "")) paste0("&team=", utils::URLencode(input$team, reserved = TRUE)) else "",
+                                   if (nzchar(input$team %||% "")) paste0("&team=", utils::URLencode(input$team, reserved = TRUE),
+                                                                          if ((input$venue %||% "both") != "both") paste0("&venue=", input$venue) else "") else "",
                                    "&score=", score()), mode = "replace"))
 
-  view <- reactive(view_data(input$season %||% "all", input$team %||% ""))
+  view <- reactive(view_data(input$season %||% "all", input$team %||% "", input$venue %||% "both"))
 
   output$grid_title <- renderText({
     s <- if ((input$season %||% "all") == "all") "All-time" else season_label(as.integer(input$season))
-    if (nzchar(input$team %||% "")) paste(input$team, "·", s) else paste("Every scoreline ·", s)
+    v <- c(both = "", home = " at home", away = " away")[[input$venue %||% "both"]]
+    if (nzchar(input$team %||% "")) paste0(input$team, v, " · ", s) else paste("Every scoreline ·", s)
   })
 
   output$stats <- renderUI({
@@ -225,7 +227,7 @@ server <- function(input, output, session) {
       span(class = "detail__count", if (!nrow(m)) "Never happened" else if (nrow(m) == 1) "Happened once" else paste(fmt_n(nrow(m)), "matches")))
     if (!nrow(m)) {
       return(tagList(heading, p(class = "detail__never",
-        if (nzchar(team)) sprintf("%s has never finished a match %d–%d in this view.", team, parts[1], parts[2])
+        if (nzchar(team)) sprintf("No %s match in this view has ended %d–%d.", team, parts[1], parts[2])
         else sprintf("No Premier League match has ever ended %d–%d%s. Yet.", parts[1], parts[2], if ((input$season %||% "all") == "all") "" else " this season"))))
     }
     first <- m[nrow(m), ]
