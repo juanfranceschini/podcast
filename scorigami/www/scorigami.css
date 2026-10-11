@@ -145,15 +145,3 @@ a:hover { color: var(--neon); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 
-/* Venue toggle (team view) */
-.controls { align-items: flex-end; }
-.controls .venue .form-group { width: auto; }
-.controls .venue .control-label { display: block; }
-.controls .venue .shiny-input-container-inline { display: block; }
-.controls .shiny-options-group { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px; }
-.controls .radio-inline { position: relative; margin: 0; padding: 0; }
-.controls .radio-inline input { position: absolute; opacity: 0; pointer-events: none; }
-.controls .radio-inline span { display: block; padding: .5rem .95rem; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--text-2); transition: background .15s, color .15s; }
-.controls .radio-inline:hover span { color: var(--text); }
-.controls .radio-inline input:checked + span { background: var(--neon); color: var(--ink-dark); }
-.controls .radio-inline input:focus-visible + span { outline: 2px solid var(--neon); outline-offset: 2px; }
