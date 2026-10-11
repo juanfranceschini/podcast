@@ -122,6 +122,8 @@ a:hover { color: var(--neon); }
 .tl__bar { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: .3rem; cursor: default; min-width: 0; }
 .tl__bar i { width: 100%; height: max(var(--h), 2px); background: var(--b3); border-radius: 4px 4px 1px 1px; transition: background .15s; }
 .tl__bar:hover i { background: var(--b4); }
+.tl__bar--zero i { height: 0; }   /* no new scorelines: leave the slot empty */
+.tl__bar--zero:hover::before { content: "0"; font-family: var(--mono); font-size: .62rem; color: var(--text-3); margin-bottom: .2rem; }
 .tl__bar b { font-family: var(--mono); font-size: .62rem; font-weight: 400; color: var(--text-3); height: .9rem; white-space: nowrap; }
 
 /* ---- tooltip & footer ------------------------------------------------------------------------------ */
@@ -145,3 +147,7 @@ a:hover { color: var(--neon); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 
+
+/* the team being viewed, highlighted in match lists */
+.mt__me { color: var(--ink-dark); background: var(--neon); font-weight: 700; border-radius: 4px; padding: 0 .3rem; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.detail__first .mt__me { font-size: .95em; }

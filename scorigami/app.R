@@ -60,6 +60,8 @@ bin_breaks <- function(m) {
 bin_of <- function(n, br) ifelse(n == 0, "never", ifelse(n == 1, "once", paste0("b", findInterval(n, br))))
 
 score_line <- function(m) sprintf("%s %d–%d %s", m$home, m$hg, m$ag, m$away)
+# Team name as HTML, highlighted when it is the team being viewed
+team_html <- function(name, team) if (nzchar(team) && name == team) sprintf('<span class="mt__me">%s</span>', esc(name)) else esc(name)
 
 grid_html <- function(v, team) {
   tab <- table(factor(v$r, 0:9), factor(v$c, 0:9))
@@ -105,7 +107,7 @@ timeline_html <- function() {
     tip <- if (n[i] == 0) sprintf("%s|No new scorelines", season_label(all_s[i]))
            else sprintf("%s|%d new scoreline%s|%s", season_label(all_s[i]), n[i], if (n[i] == 1) "" else "s",
                         paste(sprintf("%d–%d", new$hg, new$ag), collapse = ", "))
-    sprintf('<span class="tl__bar" data-tip="%s" style="--h:%.1f%%"><i></i><b>%s</b></span>', esc(tip), 100 * n[i] / m,
+    sprintf('<span class="tl__bar%s" data-tip="%s" style="--h:%.1f%%"><i></i><b>%s</b></span>', if (n[i] == 0) " tl__bar--zero" else "", esc(tip), 100 * n[i] / m,
             # label the first and last seasons and every 5th, skipping any too close to the ends
             if (i == 1 || i == length(all_s) || (all_s[i] %% 5 == 0 && i > 3 && i < length(all_s) - 2)) substr(season_label(all_s[i]), 3, 7) else "")
   }, "")
@@ -227,10 +229,11 @@ server <- function(input, output, session) {
     rows <- vapply(seq_len(nrow(shown)), function(i) {
       x <- shown[i, ]
       sprintf('<li><span class="mt__date">%s<small>%s</small></span><span class="mt__teams">%s <b>%d–%d</b> %s</span><a class="mt__yt" href="%s" target="_blank" rel="noopener" aria-label="Search highlights for %s">▶</a></li>',
-              fmt_date(x$date), season_label(x$season), esc(x$home), x$hg, x$ag, esc(x$away), yt(x), esc(score_line(x)))
+              fmt_date(x$date), season_label(x$season), team_html(x$home, team), x$hg, x$ag, team_html(x$away, team), yt(x), esc(score_line(x)))
     }, "")
     tagList(heading,
-      if (nrow(m) > 1) p(class = "detail__first", sprintf("First: %s, %s", fmt_date(first$date), score_line(first))),
+      if (nrow(m) > 1) p(class = "detail__first", HTML(sprintf("First: %s, %s %d–%d %s", fmt_date(first$date),
+                                                      team_html(first$home, team), first$hg, first$ag, team_html(first$away, team)))),
       HTML(sprintf('<ol class="mt">%s</ol>', paste(rows, collapse = ""))),
       if (nrow(m) > 40) p(class = "detail__more", sprintf("Showing the latest 40 of %s.", fmt_n(nrow(m)))))
   })
