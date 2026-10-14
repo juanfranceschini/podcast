@@ -1,0 +1,116 @@
+/* Sticker album: Premier League Scorigami as a sticker collection.
+   Cream album paper. Every scoreline is a square sticker, deeper green the more common it is; a score that
+   has never happened is an empty slot printed with its number; a scorigami is the rare one, a pink
+   holographic sticker with its corner folded like origami. The fold is the app's icon.
+   Loaded after scorigami.css, which it re-themes: drop this file to bring the neon look back. */
+:root {
+  --bg: #F3EDE1; --surface: #FFFDF8; --surface-2: #F8F3E9; --line: #E2D9C7;
+  --text: #2A2733; --text-2: #57525F; --text-3: #6B6574;
+  --neon: #2A6E53;                  /* counts and highlights: deep sage (token name from the base theme) */
+  --magenta: #FF85C3;               /* scorigami pink */
+  --pink-ink: #B4236E;              /* pink as text, 5.3:1 on the paper */
+  --b1: #CFEBDC; --b2: #9FD6BC; --b3: #5EB38C; --b4: #2A6E53;   /* very rare → common */
+  --ink-dark: #3B1029;
+  --holo: linear-gradient(115deg, rgba(255, 255, 255, 0) 22%, rgba(255, 236, 140, .6) 36%, rgba(140, 215, 255, .55) 49%, rgba(185, 255, 205, .5) 58%, rgba(255, 255, 255, 0) 72%),
+          linear-gradient(135deg, #FFB3DA 0%, #FF6FB8 34%, #FFE3F1 50%, #FF85C3 62%, #E04C9C 100%);
+  --sticker: 1px 2px 0 rgba(42, 39, 51, .16);
+  --fold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1 1h9l5 5v9H1z' fill='%23FF85C3'/%3E%3Cpath d='M10 1v5h5z' fill='%23FFF0F7' stroke='%23B4236E' stroke-width='.7' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --fold-line: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1.6 1.6h8.4l4.4 4.4v8.4H1.6z' fill='none' stroke='%23B4236E' stroke-width='1.3' stroke-linejoin='round'/%3E%3Cpath d='M10 1.6v4.4h4.4' fill='none' stroke='%23B4236E' stroke-width='1.1' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --ui: "Bricolage Grotesque", system-ui, sans-serif; --mono: "DM Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+
+/* ---- the album page --------------------------------------------------------------------------- */
+html { background: var(--bg); }
+body {
+  color: var(--text);
+  background: repeating-linear-gradient(0deg, rgba(42, 39, 51, .035) 0 1px, transparent 1px 28px),
+              repeating-linear-gradient(90deg, rgba(42, 39, 51, .035) 0 1px, transparent 1px 28px), var(--bg);
+}
+::selection { background: var(--magenta); color: var(--ink-dark); }
+:focus-visible { outline-color: var(--pink-ink); }
+.card { background: var(--surface); backdrop-filter: none; border: 1px solid var(--line); border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(42, 39, 51, .05), 0 10px 30px -18px rgba(42, 39, 51, .25); }
+.card__head h2 { font-weight: 800; }
+.foot { border-top-color: var(--line); }
+
+/* ---- the cover: the fold as the logo, the ticker and the standing records ---------------------- */
+.hero h1 { font-weight: 800; letter-spacing: -.04em; }
+.hero__mark { width: 58px; height: 58px; display: inline-block; background: url("favicon.svg") center / contain no-repeat;
+  filter: drop-shadow(1px 3px 0 rgba(42, 39, 51, .18)); }
+.hero__mark i { display: none; }
+.lede em { color: var(--text); text-decoration: underline dashed #BDB29E; text-underline-offset: 4px; }   /* "never": the empty slot */
+.latest { border-radius: 6px; background: #fff; border: 1px solid var(--line); box-shadow: var(--sticker); }
+a.latest:hover { background: #FFF6FA; border-color: var(--magenta); }
+.latest__tag { border-radius: 3px; background: var(--b4); color: #fff; }
+.latest--sg { background: #FFF0F7; border-color: var(--magenta); box-shadow: var(--sticker); }
+.rec:hover { background: rgba(42, 39, 51, .05); }
+.rec__lbl { color: var(--pink-ink); }
+.rec--pl .rec__lbl::before { width: 12px; height: 12px; background: var(--fold) center / contain no-repeat; border-radius: 0; box-shadow: none; outline: 0; }
+.rec--team .rec__lbl::before { width: 12px; height: 12px; background: var(--fold-line) center / contain no-repeat; outline: 0; }
+.rec__game b { color: var(--neon); }
+
+/* ---- filters and totals ------------------------------------------------------------------------ */
+.controls .selectize-input { background: #fff !important; border-color: var(--line) !important; border-radius: 6px !important; box-shadow: var(--sticker) !important; }
+.controls .selectize-input.focus { border-color: var(--pink-ink) !important; }
+.selectize-dropdown { background: #fff !important; border-radius: 6px !important; box-shadow: 0 12px 30px rgba(42, 39, 51, .15) !important; }
+.selectize-dropdown .option.active, .selectize-dropdown .option.selected { background: #EAF5EF !important; }
+.stat--once b { color: var(--pink-ink); }
+
+/* ---- the grid: stickers, empty slots, and the shiny one ---------------------------------------- */
+.g { gap: clamp(3px, .6vw, 6px); }
+.g__cell { border-radius: 3px; border: 2px solid #fff; box-shadow: var(--sticker); color: var(--text); font-family: var(--ui); font-weight: 700; transition: transform .14s, box-shadow .14s; }
+.g__cell:hover { transform: translateY(-2px) rotate(-1.5deg); box-shadow: 2px 5px 0 rgba(42, 39, 51, .18); }   /* peeling off the page */
+.g__cell--b1 { background: var(--b1); }
+.g__cell--b2 { background: var(--b2); }
+.g__cell--b3 { background: var(--b3); color: var(--text); }
+.g__cell--b4 { background: var(--b4); color: #fff; }
+.g__cell--never { background: transparent; border: 0; box-shadow: none; outline: 1.5px dashed #C9BFAB; outline-offset: -2px; }
+.g__cell--never::after { content: attr(data-label); font: 500 clamp(.45rem, .75vw, .6rem) var(--mono); color: #A89E8A; }   /* the slot shows its number */
+.g__cell--never:hover { transform: none; box-shadow: none; outline-color: var(--text-3); }
+/* The scorigami: pink holographic foil, corner folded like origami; the sheen slides across on hover */
+.g__cell--once {
+  position: relative; background: var(--holo); background-size: 260% 260%, 100% 100%; background-position: 100% 100%, 0 0;
+  color: var(--ink-dark); box-shadow: none; clip-path: polygon(0 0, 70% 0, 100% 30%, 100% 100%, 0 100%);
+  transition: background-position .6s, transform .14s;
+}
+.g__cell--once::before { content: ""; position: absolute; top: 0; right: 0; width: 30%; height: 30%;
+  background: linear-gradient(to bottom left, transparent 50%, #FFF0F7 50%); filter: drop-shadow(-1px 1px 0 rgba(59, 16, 41, .3)); }
+.g__cell--once:hover { background-position: 0 0, 0 0; }
+.g__cell.is-selected { box-shadow: 0 0 0 3px var(--text), 3px 5px 0 rgba(42, 39, 51, .22); transform: translateY(-2px) rotate(-1deg); }
+.g__cell--once.is-selected { clip-path: none; }
+.legend { color: var(--text-2); }
+.lg i { border-radius: 2px; border: 2px solid #fff; box-shadow: var(--sticker); width: 16px; height: 16px; }
+.lg i.g__cell--never { border: 0; box-shadow: none; }
+.lg i.g__cell--never::after { content: none; }
+.lg i.g__cell--once { border: 0; box-shadow: none; clip-path: polygon(0 0, 66% 0, 100% 34%, 100% 100%, 0 100%); }
+
+/* ---- detail panel, timeline, tooltip ----------------------------------------------------------- */
+.mt li { background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; }
+.mt__yt { background: #FFE6F2; color: var(--pink-ink); }
+.mt__yt:hover { background: var(--magenta); color: var(--ink-dark); }
+.mt__me { background: var(--b2); color: var(--text); border-radius: 2px; }
+.detail__foot button { border-radius: 6px; background: #fff; }
+.tl__bar i { border-radius: 2px 2px 0 0; }
+.tip { background: #fff; border: 1px solid var(--line); border-radius: 6px; color: var(--text-2); box-shadow: 0 12px 30px rgba(42, 39, 51, .18); }
+
+/* ---- latest results: trading cards, with the two verdicts as stickers --------------------------- */
+.rs { background: #fff; border-radius: 6px; box-shadow: var(--sticker); }
+.rs:hover { border-color: var(--b3); }
+.rs--team { border-color: #F4B3D3; }
+.rs--sg { border-color: var(--magenta); background: linear-gradient(180deg, #FFE9F4, #fff 55%); box-shadow: var(--sticker); }
+.rs--sg .rs__score b { color: var(--pink-ink); }
+.vd { border-radius: 4px; background: var(--surface-2); border-color: var(--line); color: var(--text-2); }
+.vd i { border-radius: 1px; background: var(--b3); }
+.vd--pl { background: var(--holo); border-color: #E04C9C; color: var(--ink-dark); box-shadow: none; }
+.vd--pl i { width: 12px; height: 12px; background: var(--fold) center / contain no-repeat; border-radius: 0; }
+.vd--team { background: #FFF0F7; border-color: var(--magenta); color: var(--pink-ink); }
+.vd--team i { width: 12px; height: 12px; background: var(--fold-line) center / contain no-repeat; outline: 0; }
+.rs__team--new b { color: var(--pink-ink); }
+.rs__see { border-radius: 6px; background: #fff; }
+
+@media (max-width: 480px) {
+  .g__cell--never::after { content: none; }
+  .g__cell { letter-spacing: -.03em; }
+}
+@media (max-width: 600px) { .hero__mark { width: 46px; height: 46px; } }

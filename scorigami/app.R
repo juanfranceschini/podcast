@@ -193,17 +193,19 @@ grid_html <- function(v, team) {
                      if (100 * n / total < .1) "<0.1%" else sprintf("%.1f%%", 100 * n / total),
                      fmt_date(sub$date[1]), score_line(sub[1, ]),
                      if (n > 1) paste0("Latest: ", fmt_date(sub$date[n]), ", ", score_line(sub[n, ])) else "Happened exactly once: a scorigami")
-      cells <- c(cells, sprintf('<button class="g__cell g__cell--%s" type="button" tabindex="-1" data-score="%d-%d" data-tip="%s" aria-label="%d home, %d away: %s">%s</button>',
-        bin_of(n, br), r, cc, esc(tip), r, cc, if (n == 0) "never happened" else if (n == 1) "1 match" else paste(fmt_n(n), "matches"), if (n > 0) fmt_n(n) else ""))
+      cells <- c(cells, sprintf('<button class="g__cell g__cell--%s" type="button" tabindex="-1" data-score="%d-%d" data-label="%d–%d" data-tip="%s" aria-label="%d home, %d away: %s">%s</button>',
+        bin_of(n, br), r, cc, r, cc, esc(tip), r, cc, if (n == 0) "never happened" else if (n == 1) "1 match" else paste(fmt_n(n), "matches"),
+        # four-digit counts get a short form ("1.4k") that phones show instead
+        if (n >= 1000) sprintf('<span class="n-long">%s</span><span class="n-short">%.1fk</span>', fmt_n(n), n / 1000) else if (n > 0) fmt_n(n) else ""))
     }
   }
   head <- paste0('<span class="g__corner"></span>', paste0(sprintf('<span class="g__axis g__axis--col">%d</span>', 0:maxg), collapse = ""))
   legend_ranges <- function(i) { lo <- br[i]; hi <- if (i < 4 && is.finite(br[i + 1])) br[i + 1] - 1 else NA
     if (!is.finite(lo)) return(NULL); if (is.na(hi)) paste0(fmt_n(lo), "+") else if (hi == lo) fmt_n(lo) else paste0(fmt_n(lo), "–", fmt_n(hi)) }
   legend <- paste0(
-    '<span class="lg"><i class="g__cell--never"></i>Never</span>',
-    '<span class="lg"><i class="g__cell--once"></i>Once (scorigami)</span>',
-    paste0(unlist(lapply(1:4, function(i) { lab <- legend_ranges(i); if (is.null(lab)) NULL else sprintf('<span class="lg"><i class="g__cell--b%d"></i>%s</span>', i, lab) })), collapse = ""))
+    '<span class="lg"><i class="g__cell--never"></i>Never: empty slot</span>',
+    '<span class="lg"><i class="g__cell--once"></i>Scorigami: once</span>',
+    paste0(unlist(lapply(1:4, function(i) { lab <- legend_ranges(i); if (is.null(lab)) NULL else sprintf('<span class="lg"><i class="g__cell--b%d"></i>%s %s</span>', i, c("Very rare", "Rare", "Uncommon", "Common")[i], lab) })), collapse = ""))
   HTML(sprintf(
     '<div class="g-wrap"><div class="g__ylabel">%s ↓</div><div class="g__xlabel">%s →</div>
        <div class="g" style="--n:%d">%s%s</div></div><div class="legend" aria-label="Legend">%s</div>',
@@ -247,8 +249,9 @@ ui <- fluidPage(
     tags$meta(name = "description", content = "Every Premier League scoreline since 1992. Which have happened only once, and which have never happened at all?"),
     tags$link(rel = "icon", href = "favicon.svg", type = "image/svg+xml"),
     tags$link(rel = "preconnect", href = "https://fonts.googleapis.com"),
-    tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap"),
+    tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=DM+Mono:wght@400;500&display=swap"),
     tags$link(rel = "stylesheet", href = "scorigami.css"),
+    tags$link(rel = "stylesheet", href = "album.css"),          # the sticker-album theme
     tags$script(src = "scorigami.js")
   ),
 
