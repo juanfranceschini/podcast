@@ -106,6 +106,18 @@ latest_round <- function(x) {
          last = if (nrow(same)) same[nrow(same), ], home_last = if (nrow(hp)) hp[nrow(hp), ], away_last = if (nrow(ap)) ap[nrow(ap), ])
   })
 }
+# Standing records: the latest PL scorigami, and the latest team scorigami (a club's first time with a
+# result at that venue). In date order, a club's first (venue, score) is its team scorigami.
+records_of <- function(x) {
+  new_home <- !duplicated(paste(x$home, x$key)); new_away <- !duplicated(paste(x$away, x$key))
+  pl <- x[!duplicated(x$key), ]; pl <- pl[nrow(pl), ]
+  i <- max(which(new_home | new_away)); t <- x[i, ]
+  team <- if (new_home[i] && new_away[i]) "Both teams" else if (new_home[i]) disp(t$home) else disp(t$away)
+  what <- if (new_home[i] && new_away[i]) "first for both clubs"
+          else paste("first", sprintf("%d–%d", t$hg, t$ag), result_word(new_home[i], t$hg, t$ag))
+  list(pl = pl, team_match = t, team = team, what = what)
+}
+
 result_word <- function(at_home, h, a) {
   gf <- if (at_home) h else a; ga <- if (at_home) a else h
   paste(if (at_home) "home" else "away", if (gf > ga) "win" else if (gf == ga) "draw" else "loss")
@@ -114,23 +126,27 @@ result_card <- function(r) {
   m <- r$m; s <- sprintf("%d–%d", m$hg, m$ag)
   team_li <- function(team, at_home, last) {
     what <- paste(s, result_word(at_home, m$hg, m$ag))
-    if (is.null(last)) return(sprintf('<li class="rs__team rs__team--new"><span class="rs__venue">%s</span><span><b>Team scorigami.</b> %s&rsquo;s first %s in the Premier League.</span></li>',
+    if (is.null(last)) return(sprintf('<li class="rs__team rs__team--new"><span class="rs__venue">%s</span><span><b>Team Scorigami!</b> %s&rsquo;s first %s in the Premier League.</span></li>',
                                      if (at_home) "Home" else "Away", esc(disp(team)), what))
     other <- if (at_home) paste("vs", disp(last$away)) else paste("at", disp(last$home))
     sprintf('<li class="rs__team"><span class="rs__venue">%s</span><span>%s: last %s %s, %s</span></li>',
             if (at_home) "Home" else "Away", esc(disp(team)), what, esc(other), fmt_date(last$date))
   }
-  team_sg <- is.null(r$home_last) || is.null(r$away_last)
-  badge <- if (r$scorigami) '<span class="rs__badge rs__badge--sg"><i></i>Scorigami</span>'
-           else if (team_sg) '<span class="rs__badge rs__badge--team"><i></i>Team scorigami</span>'
-           else '<span class="rs__badge"><i></i>No scorigami</span>'
+  # Two verdicts for every game: PL Scorigami (never in the league) and Team Scorigami (a club's first time
+  # with this result at this venue). A PL scorigami is a team scorigami for both clubs.
+  new_home <- is.null(r$home_last); new_away <- is.null(r$away_last); team_sg <- new_home || new_away
+  who <- if (new_home && new_away) "both teams" else if (new_home) disp(m$home) else if (new_away) disp(m$away) else ""
+  verdicts <- paste0('<div class="rs__verdicts">',
+    if (r$scorigami) '<span class="vd vd--pl"><i></i>PL Scorigami!</span>' else '<span class="vd"><i></i>No PL scorigami</span>',
+    if (team_sg) sprintf('<span class="vd vd--team"><i></i>Team Scorigami! <em>%s</em></span>', esc(who)) else '<span class="vd"><i></i>No team scorigami</span>',
+    '</div>')
   league <- if (r$scorigami) sprintf("The first %s in Premier League history: a new square on the grid, the %s different scoreline since 1992.", s, ordinal(r$nth))
             else sprintf("%s has now happened %s times. Most recently %s %s %s, %s.", s, fmt_n(r$n), esc(disp(r$last$home)), s, esc(disp(r$last$away)), fmt_date(r$last$date))
-  sprintf('<article class="rs%s" data-score="%d-%d"><header>%s<span class="rs__date">%s</span></header>
-    <p class="rs__score"><span>%s</span><b>%s</b><span>%s</span></p><p class="rs__league">%s</p>%s
+  sprintf('<article class="rs%s" data-score="%d-%d"><header><span class="rs__date">%s</span></header>
+    <p class="rs__score"><span>%s</span><b>%s</b><span>%s</span></p>%s<p class="rs__league">%s</p>%s
     <button class="rs__see" type="button" data-score="%d-%d">See %s on the grid</button></article>',
-    if (r$scorigami) " rs--sg" else if (team_sg) " rs--team" else "", m$hg, m$ag, badge, short_day(m$date),
-    esc(disp(m$home)), s, esc(disp(m$away)), league,
+    if (r$scorigami) " rs--sg" else if (team_sg) " rs--team" else "", m$hg, m$ag, short_day(m$date),
+    esc(disp(m$home)), s, esc(disp(m$away)), verdicts, league,
     if (r$scorigami) "" else paste0('<ul class="rs__teams">', team_li(m$home, TRUE, r$home_last), team_li(m$away, FALSE, r$away_last), "</ul>"),
     m$hg, m$ag, s)
 }
@@ -240,7 +256,8 @@ ui <- fluidPage(
     div(class = "hero__mark", `aria-hidden` = "true", HTML(paste(rep("<i></i>", 9), collapse = ""))),
     h1("SCORIGAMI"),
     p(class = "lede", "Every scoreline since 1992. Which have happened only once, and which have ", tags$em("never"), " happened at all?"),
-    div(class = "ticker", uiOutput("ticker"))
+    div(class = "ticker", uiOutput("ticker")),
+    div(class = "records-wrap", uiOutput("records"))
   ),
 
   # Filters and the totals they change, in one row right above the grid
@@ -307,15 +324,28 @@ server <- function(input, output, session) {
     days <- range(vapply(rr, function(r) as.numeric(r$m$date), 0))
     when <- if (days[1] == days[2]) short_day(as.Date(days[1])) else paste(short_day(as.Date(days[1])), "–", short_day(as.Date(days[2])))
     sg <- Filter(function(r) r$scorigami, rr)
-    n_team <- sum(vapply(rr, function(r) !r$scorigami && (is.null(r$home_last) || is.null(r$away_last)), TRUE))
-    last_sg <- x[!duplicated(x$key), ]; last_sg <- last_sg[nrow(last_sg), ]
-    verdict <- if (length(sg)) sprintf("SCORIGAMI: %s %d–%d %s", disp(sg[[1]]$m$home), sg[[1]]$m$hg, sg[[1]]$m$ag, disp(sg[[1]]$m$away))
-               else paste0("No scorigami", if (n_team) sprintf(" · %d team scorigami%s", n_team, if (n_team == 1) "" else "s") else "",
-                           sprintf(" · last one: %s %d–%d %s, %s", disp(last_sg$home), last_sg$hg, last_sg$ag, disp(last_sg$away), format(last_sg$date, "%b %Y")))
+    # Clubs with a team scorigami this round (not counting PL scorigamis, which cover both clubs)
+    team_clubs <- unlist(lapply(Filter(function(r) !r$scorigami, rr), function(r)
+      c(if (is.null(r$home_last)) disp(r$m$home), if (is.null(r$away_last)) disp(r$m$away))))
+    pl <- if (length(sg)) sprintf("PL SCORIGAMI! %s %d–%d %s", disp(sg[[1]]$m$home), sg[[1]]$m$hg, sg[[1]]$m$ag, disp(sg[[1]]$m$away))
+          else "No PL scorigami"
+    team <- if (length(team_clubs)) paste("TEAM SCORIGAMI!", paste(team_clubs, collapse = ", ")) else "No team scorigami"
+    verdict <- paste(pl, "·", team)
     a(class = paste("latest", if (length(sg)) "latest--sg"), href = "#latest",
       span(class = "latest__tag", "Latest results"),
       span(class = "latest__score", sprintf("%s · %d result%s", when, length(rr), if (length(rr) == 1) "" else "s")),
       span(class = "latest__meta", verdict))
+  })
+
+  output$records <- renderUI({
+    r <- records_of(dat()); p <- r$pl; t <- r$team_match
+    rec <- function(cls, label, who, m, extra) tags$button(class = paste("rec", cls), type = "button", `data-score` = sprintf("%d-%d", m$hg, m$ag),
+      span(class = "rec__lbl", label), who,
+      span(class = "rec__game", disp(m$home), tags$b(sprintf("%d–%d", m$hg, m$ag)), disp(m$away)),
+      span(class = "rec__meta", extra))
+    div(class = "records",
+      rec("rec--pl", "Last PL scorigami", NULL, p, fmt_date(p$date)),
+      rec("rec--team", "Last team scorigami", tags$em(r$team), t, paste0(r$what, " · ", fmt_date(t$date))))
   })
 
   output$latest <- renderUI({

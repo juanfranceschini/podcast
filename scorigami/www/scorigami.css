@@ -219,3 +219,42 @@ a.latest:hover { color: inherit; background: rgba(234, 0, 217, .16); border-colo
 }
 .rs__see:hover, .rs:hover .rs__see { border-color: var(--neon); color: var(--neon); }
 @media (pointer: coarse) { .rs__see { min-height: 44px; } }
+
+/* Two verdicts per game: PL Scorigami (filled, glowing) and Team Scorigami (outlined); a "no" stays quiet */
+.rs__verdicts { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; }
+.vd {
+  display: inline-flex; align-items: center; gap: .4rem; padding: .28rem .65rem; border-radius: 999px; border: 1px solid var(--line);
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); white-space: nowrap;
+}
+.vd i { width: 9px; height: 9px; border-radius: 2px; background: var(--b2); }
+.vd em { font-style: normal; text-transform: none; letter-spacing: 0; font-family: var(--ui); font-weight: 700; font-size: .8rem; }
+.vd--pl { background: var(--magenta); border-color: var(--magenta); color: var(--ink-dark); font-weight: 500; box-shadow: 0 0 16px rgba(234, 0, 217, .5); }
+.vd--pl i { background: var(--ink-dark); }
+.vd--team { border-color: var(--magenta); color: var(--magenta); background: rgba(234, 0, 217, .1); font-weight: 500; }
+.vd--team i { background: transparent; outline: 1.5px solid var(--magenta); outline-offset: -1.5px; }
+.vd--team em { color: var(--text); }
+.rs__team--new b { color: var(--magenta); }
+
+/* Standing records under the ticker: the latest PL scorigami and the latest team scorigami */
+.records-wrap { min-height: 2.2rem; margin-top: .65rem; }
+.records { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1.4rem; }
+.rec {
+  display: inline-flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: .15rem .5rem;
+  background: none; border: 0; padding: .2rem .3rem; border-radius: 8px; color: var(--text-2); font: 400 .86rem var(--ui); cursor: pointer;
+}
+.rec:hover { color: var(--text); background: rgba(244, 238, 252, .05); }
+.rec__lbl { font-family: var(--mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--magenta); }
+.rec--pl .rec__lbl::before, .rec--team .rec__lbl::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .4rem; vertical-align: 1px; }
+.rec--pl .rec__lbl::before { background: var(--magenta); box-shadow: 0 0 8px var(--magenta); }
+.rec--team .rec__lbl::before { outline: 1.5px solid var(--magenta); outline-offset: -1.5px; }
+.rec em { font-style: normal; font-weight: 800; color: var(--text); }
+.rec__game { color: var(--text); font-weight: 600; }
+.rec__game b { color: var(--neon); margin: 0 .3rem; font-weight: 800; }
+.rec__meta { color: var(--text-3); font-size: .8rem; }
+@media (max-width: 600px) { .records { flex-direction: column; align-items: center; gap: .2rem; } }
+.rec em::after { content: " ·"; color: var(--text-3); font-weight: 400; }
+@media (max-width: 600px) {
+  .records-wrap { margin-top: .5rem; }
+  .rec { font-size: .82rem; padding: .1rem .2rem; }
+  .rec__meta { display: none; }      /* phones: label, team, game and score; the date is one tap away */
+}

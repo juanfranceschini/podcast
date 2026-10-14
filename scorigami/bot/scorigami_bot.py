@@ -122,28 +122,35 @@ def compose(m, hist, disp):
     h, a, s = m["hg"], m["ag"], score(m["hg"], m["ag"])
     head = f"⚽ {name(m['home'])} {s} {name(m['away'])}"
     same = [x for x in hist if x["hg"] == h and x["ag"] == a]
+    # Two verdicts for every game: PL Scorigami (never in the league) and Team Scorigami (a club's first
+    # time with this result at this venue). A PL scorigami is a team scorigami for both clubs.
     if not same:
         nth = len({(x["hg"], x["ag"]) for x in hist}) + 1
-        return [f"🚨🟪 SCORIGAMI 🟪🚨\n{head}\n\nThe first {s} in Premier League history. "
+        return [f"🚨🟪 PL SCORIGAMI! 🟪🚨\n{head}\n🟪 TEAM SCORIGAMI! (both teams)\n\nThe first {s} in Premier League history. "
                 f"A new square on the grid: the {ordinal(nth)} different scoreline since 1992."]
+    new_home = not any(x["home"] == m["home"] for x in same)
+    new_away = not any(x["away"] == m["away"] for x in same)
+    who = "both teams" if new_home and new_away else name(m["home"]) if new_home else name(m["away"]) if new_away else None
+    verdict = "🟩 No PL Scorigami · " + (f"🟪 TEAM SCORIGAMI! ({who})" if who else "🟩 No Team Scorigami")
 
     def team_line(team, at_home, short=False):
         prior = [x for x in same if (x["home"] if at_home else x["away"]) == team]
         what = f"{s} {result_word(at_home, h, a)}"
+        icon = "🏠" if at_home else "✈️"
         if not prior:
-            return f"🟪 Team Scorigami for {name(team)}: first {what} in their Premier League history."
+            return f"{icon} {name(team)}: first {what} in their Premier League history"
         last = prior[-1]
-        icon, where = ("🏠", f"vs {name(last['away'])}") if at_home else ("✈️", f"at {name(last['home'])}")
+        where = f"vs {name(last['away'])}" if at_home else f"at {name(last['home'])}"
         return f"{icon} {name(team)}: last {what} {where}" + ("" if short else f", {day(last['date'])}")
 
     last = same[-1]
     recent = f", most recently {name(last['home'])} {s} {name(last['away'])} ({day(last['date'])})"
-    league = f"🟩 No Scorigami. {s} has now happened {len(same) + 1:,} times"
+    count = f"{s} has now happened {len(same) + 1:,} times"
     teams = f"{team_line(m['home'], True)}\n{team_line(m['away'], False)}"
     teams_short = f"{team_line(m['home'], True, True)}\n{team_line(m['away'], False, True)}"
-    return [f"{head}\n{league}{recent}.\n\n{teams}",
-            f"{head}\n{league}.\n\n{teams}",
-            f"{head}\n{league}.\n\n{teams_short}"]
+    return [f"{head}\n{verdict}\n\n{count}{recent}.\n{teams}",
+            f"{head}\n{verdict}\n\n{count}.\n{teams}",
+            f"{head}\n{verdict}\n\n{count}.\n{teams_short}"]
 
 
 def best_post(candidates):

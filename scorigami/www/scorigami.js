@@ -73,7 +73,7 @@
       target.scrollIntoView({ behavior: smooth, block: "center" }); return;
     }
     // A latest-result card lights up its square on the grid
-    var card = e.target.closest(".rs[data-score]");
+    var card = e.target.closest(".rs[data-score], .rec[data-score]");
     if (card && !e.target.closest("a")) {
       selected = card.dataset.score; mark(); hide();
       Shiny.setInputValue("cell", selected, { priority: "event" });
