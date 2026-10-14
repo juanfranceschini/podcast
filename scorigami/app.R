@@ -1,5 +1,6 @@
 # Premier League Scorigami — every scoreline since 1992: which happened once, which never.
-# Data: pl_history.rds, refreshed weekly by update_data.R (GitHub Actions).
+# Data: pl_history.rds, refreshed weekly by update_data.R (GitHub Actions), plus live results from
+# football-data.org when FOOTBALL_DATA_TOKEN is set (scorigami/.Renviron, deployed with the app).
 # The previous version of this app is in git history (commit b5049f5).
 
 library(shiny)
@@ -7,14 +8,20 @@ library(shiny)
 `%||%` <- function(a, b) if (is.null(a) || !length(a) || identical(a, "")) b else a
 
 # ---- data -------------------------------------------------------------------------
+season_of <- function(date) ifelse(as.integer(format(date, "%m")) >= 8, as.integer(format(date, "%Y")), as.integer(format(date, "%Y")) - 1L)
+# One shape for history and live results: each pairing once per season, in date order
+prep <- function(x) {
+  x$season <- season_of(x$date)
+  x <- x[!duplicated(paste(x$season, x$home, x$away)), ]
+  x <- x[order(x$date, x$home), ]
+  x$key <- paste0(x$hg, "-", x$ag)
+  rownames(x) <- NULL
+  x
+}
 raw <- readRDS("pl_history.rds")
-d <- data.frame(
-  date = as.Date(raw$Date_Parsed %||% raw$Date),
-  home = raw$Home, away = raw$Away,
-  hg = as.integer(raw$HG), ag = as.integer(raw$AG)
-)
-d$season <- ifelse(as.integer(format(d$date, "%m")) >= 8, as.integer(format(d$date, "%Y")), as.integer(format(d$date, "%Y")) - 1L)
-d <- d[order(d$date, d$home), ]
+d_hist <- prep(data.frame(date = as.Date(raw$Date_Parsed %||% raw$Date), home = raw$Home, away = raw$Away,
+                          hg = as.integer(raw$HG), ag = as.integer(raw$AG)))
+d <- d_hist     # the filters below are built once, from the history
 
 season_label <- function(y) sprintf("%d-%02d", y, (y + 1) %% 100)
 latest_season <- max(d$season)
@@ -30,10 +37,8 @@ season_choices_for <- function(team) {
   if (!nzchar(team)) return(season_choices)
   season_choices[season_choices == "all" | season_choices %in% as.character(team_seasons[[team]])]
 }
-updated_on <- max(d$date)
 
 # First-ever occurrence of each scoreline (all-time, home-away order)
-d$key <- paste0(d$hg, "-", d$ag)
 firsts <- d[!duplicated(d$key), ]
 firsts$order <- seq_len(nrow(firsts))
 latest_first <- firsts[nrow(firsts), ]
@@ -44,12 +49,97 @@ ordinal <- function(n) paste0(n, if (n %% 100 %in% 11:13) "th" else c("th", "st"
 yt <- function(m) paste0("https://www.youtube.com/results?search_query=",
                          utils::URLencode(paste(m$home, m$away, m$hg, m$ag, format(m$date, "%Y"), "highlights"), reserved = TRUE))
 esc <- function(x) htmltools::htmlEscape(x)
+short_day <- function(x) paste(format(x, "%a"), as.integer(format(x, "%d")), format(x, "%b"))   # "Sun 12 Oct"
+
+# ---- live results: football-data.org on top of the weekly history ----------------------------
+# Fetched at most every 10 minutes and shared by every visitor. Without a token the app uses the weekly data.
+if (file.exists(".Renviron")) readRenviron(".Renviron")
+norm_team <- function(x) { w <- strsplit(gsub("[^a-z0-9& ]", " ", tolower(x)), " +")[[1]]; paste(w[nzchar(w) & !w %in% c("fc", "afc")], collapse = " ") }
+teams_csv <- read.csv("bot/teams.csv", stringsAsFactors = FALSE)               # shared with the X bot
+to_app <- setNames(teams_csv$app_name, vapply(teams_csv$api_name, norm_team, ""))
+display_names <- setNames(teams_csv$display_name, teams_csv$app_name)
+disp <- function(x) ifelse(x %in% names(display_names), display_names[x], x)
+
+live <- new.env()
+live$rows <- d_hist[0, c("date", "home", "away", "hg", "ag")]; live$at <- NULL; live$ok <- FALSE; live$data <- d_hist
+fetch_live <- function() {
+  body <- if (nzchar(Sys.getenv("SCORIGAMI_LIVE_FILE"))) {                       # local testing with a saved response
+    jsonlite::fromJSON(Sys.getenv("SCORIGAMI_LIVE_FILE"), simplifyVector = FALSE)
+  } else {
+    tok <- Sys.getenv("FOOTBALL_DATA_TOKEN"); if (!nzchar(tok)) return(NULL)
+    to <- Sys.Date(); from <- max(max(d_hist$date) + 1, to - 9)
+    resp <- tryCatch(httr2::request("https://api.football-data.org/v4/competitions/PL/matches") |>
+      httr2::req_url_query(status = "FINISHED", dateFrom = format(from), dateTo = format(to)) |>
+      httr2::req_headers(`X-Auth-Token` = tok) |> httr2::req_timeout(8) |> httr2::req_perform(), error = function(e) NULL)
+    if (is.null(resp)) return(NULL)
+    httr2::resp_body_json(resp)
+  }
+  rows <- lapply(body$matches, function(x) {
+    h <- unname(to_app[norm_team(x$homeTeam$name %||% "")]); a <- unname(to_app[norm_team(x$awayTeam$name %||% "")])
+    ft <- x$score$fullTime
+    if (is.na(h) || is.na(a) || is.null(ft$home) || is.null(ft$away)) return(NULL)   # unknown club: skip, never guess
+    kick <- as.POSIXct(x$utcDate, format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    data.frame(date = as.Date(format(kick, tz = "Europe/London")), home = h, away = a, hg = as.integer(ft$home), ag = as.integer(ft$away))
+  })
+  do.call(rbind, c(list(live$rows[0, ]), rows))
+}
+data_now <- function() {
+  if (is.null(live$at) || difftime(Sys.time(), live$at, units = "mins") >= 10) {
+    rows <- fetch_live(); live$at <- Sys.time()
+    if (!is.null(rows)) {
+      live$ok <- TRUE; live$rows <- rows
+      live$data <- if (nrow(rows)) prep(rbind(d_hist[, c("date", "home", "away", "hg", "ag")], rows)) else d_hist
+    }
+  }
+  live$data
+}
+
+# The latest results (the last four days of matches), each told the way the X bot tells it:
+# scorigami or not, how often the score has happened, and each club's last time at that venue
+latest_round <- function(x) {
+  idx <- which(x$date >= max(x$date) - 3)
+  lapply(rev(idx), function(i) {
+    m <- x[i, ]; prior <- x[seq_len(i - 1), ]
+    same <- prior[prior$hg == m$hg & prior$ag == m$ag, ]
+    hp <- same[same$home == m$home, ]; ap <- same[same$away == m$away, ]
+    list(m = m, scorigami = !nrow(same), n = nrow(same) + 1, nth = length(unique(prior$key)) + 1,
+         last = if (nrow(same)) same[nrow(same), ], home_last = if (nrow(hp)) hp[nrow(hp), ], away_last = if (nrow(ap)) ap[nrow(ap), ])
+  })
+}
+result_word <- function(at_home, h, a) {
+  gf <- if (at_home) h else a; ga <- if (at_home) a else h
+  paste(if (at_home) "home" else "away", if (gf > ga) "win" else if (gf == ga) "draw" else "loss")
+}
+result_card <- function(r) {
+  m <- r$m; s <- sprintf("%d–%d", m$hg, m$ag)
+  team_li <- function(team, at_home, last) {
+    what <- paste(s, result_word(at_home, m$hg, m$ag))
+    if (is.null(last)) return(sprintf('<li class="rs__team rs__team--new"><span class="rs__venue">%s</span><span><b>Team scorigami.</b> %s&rsquo;s first %s in the Premier League.</span></li>',
+                                     if (at_home) "Home" else "Away", esc(disp(team)), what))
+    other <- if (at_home) paste("vs", disp(last$away)) else paste("at", disp(last$home))
+    sprintf('<li class="rs__team"><span class="rs__venue">%s</span><span>%s: last %s %s, %s</span></li>',
+            if (at_home) "Home" else "Away", esc(disp(team)), what, esc(other), fmt_date(last$date))
+  }
+  team_sg <- is.null(r$home_last) || is.null(r$away_last)
+  badge <- if (r$scorigami) '<span class="rs__badge rs__badge--sg"><i></i>Scorigami</span>'
+           else if (team_sg) '<span class="rs__badge rs__badge--team"><i></i>Team scorigami</span>'
+           else '<span class="rs__badge"><i></i>No scorigami</span>'
+  league <- if (r$scorigami) sprintf("The first %s in Premier League history: a new square on the grid, the %s different scoreline since 1992.", s, ordinal(r$nth))
+            else sprintf("%s has now happened %s times. Most recently %s %s %s, %s.", s, fmt_n(r$n), esc(disp(r$last$home)), s, esc(disp(r$last$away)), fmt_date(r$last$date))
+  sprintf('<article class="rs%s" data-score="%d-%d"><header>%s<span class="rs__date">%s</span></header>
+    <p class="rs__score"><span>%s</span><b>%s</b><span>%s</span></p><p class="rs__league">%s</p>%s
+    <button class="rs__see" type="button" data-score="%d-%d">See %s on the grid</button></article>',
+    if (r$scorigami) " rs--sg" else if (team_sg) " rs--team" else "", m$hg, m$ag, badge, short_day(m$date),
+    esc(disp(m$home)), s, esc(disp(m$away)), league,
+    if (r$scorigami) "" else paste0('<ul class="rs__teams">', team_li(m$home, TRUE, r$home_last), team_li(m$away, FALSE, r$away_last), "</ul>"),
+    m$hg, m$ag, s)
+}
 
 # ---- view helpers -------------------------------------------------------------------
 
 # Matches in view. Every view uses the same axes: rows = home goals, cols = away goals.
 # A team view only filters to that team's matches.
-view_data <- function(season, team) {
+view_data <- function(d, season, team) {
   x <- if (season == "all") d else d[d$season == as.integer(season), ]
   if (nzchar(team)) x <- x[x$home == team | x$away == team, ]
   x$r <- x$hg; x$c <- x$ag
@@ -106,7 +196,7 @@ grid_html <- function(v, team) {
 
 # New scorelines per season, for the whole league or one team. Every season keeps its slot;
 # seasons the team was not in the league are marked, and the selected season is lit.
-timeline_html <- function(team = "", season = "all") {
+timeline_html <- function(d, team = "", season = "all") {
   x <- if (nzchar(team)) d[d$home == team | d$away == team, ] else d
   fx <- x[!duplicated(x$key), ]
   all_s <- sort(unique(d$season))
@@ -150,10 +240,7 @@ ui <- fluidPage(
     div(class = "hero__mark", `aria-hidden` = "true", HTML(paste(rep("<i></i>", 9), collapse = ""))),
     h1("SCORIGAMI"),
     p(class = "lede", "Every scoreline since 1992. Which have happened only once, and which have ", tags$em("never"), " happened at all?"),
-    div(class = "latest",
-      span(class = "latest__tag", "Latest scorigami"),
-      span(class = "latest__score", sprintf("%s %d–%d %s", latest_first$home, latest_first$hg, latest_first$ag, latest_first$away)),
-      span(class = "latest__meta", sprintf("%s · the %s different scoreline in Premier League history", fmt_date(latest_first$date), ordinal(latest_first$order))))
+    div(class = "ticker", uiOutput("ticker"))
   ),
 
   # Filters and the totals they change, in one row right above the grid
@@ -175,6 +262,8 @@ ui <- fluidPage(
     tags$aside(class = "card card--detail", `aria-live` = "polite", uiOutput("detail"))
   ),
 
+  tags$section(class = "card card--latest", id = "latest", `aria-label` = "Latest results", uiOutput("latest")),
+
   tags$section(class = "card card--timeline", `aria-label` = "Timeline", uiOutput("timeline")),
 
   div(id = "tip", class = "tip", role = "tooltip", hidden = NA),
@@ -182,7 +271,7 @@ ui <- fluidPage(
   tags$footer(class = "foot",
     p("Built by ", a(href = "https://jafranceschini.quarto.pub/juan-franceschini-lab/", target = "_blank", rel = "noopener", "Juan Franceschini"),
       " · a White Belt project · ", a(href = "https://www.linkedin.com/in/juan-franceschini-uy/", target = "_blank", rel = "noopener", "LinkedIn")),
-    p(class = "foot__small", sprintf("Results from football-data.co.uk, updated weekly (latest match: %s). Scorelines are always home–away. Not affiliated with the Premier League.", fmt_date(updated_on))))
+    p(class = "foot__small", "Results from football-data.co.uk, refreshed weekly, and live from football-data.org. Scorelines are always home–away. Not affiliated with the Premier League."))
 )
 
 # ---- server ----------------------------------------------------------------------------------
@@ -209,7 +298,34 @@ server <- function(input, output, session) {
                                    if (nzchar(input$team %||% "")) paste0("&team=", utils::URLencode(input$team, reserved = TRUE)) else "",
                                    "&score=", score()), mode = "replace"))
 
-  view <- reactive(view_data(input$season %||% "all", input$team %||% ""))
+  dat <- reactive({ invalidateLater(10 * 60 * 1000); data_now() })               # live results every 10 minutes
+  view <- reactive(view_data(dat(), input$season %||% "all", input$team %||% ""))
+  recent <- reactive(latest_round(dat()))
+
+  output$ticker <- renderUI({
+    rr <- recent(); x <- dat()
+    days <- range(vapply(rr, function(r) as.numeric(r$m$date), 0))
+    when <- if (days[1] == days[2]) short_day(as.Date(days[1])) else paste(short_day(as.Date(days[1])), "–", short_day(as.Date(days[2])))
+    sg <- Filter(function(r) r$scorigami, rr)
+    n_team <- sum(vapply(rr, function(r) !r$scorigami && (is.null(r$home_last) || is.null(r$away_last)), TRUE))
+    last_sg <- x[!duplicated(x$key), ]; last_sg <- last_sg[nrow(last_sg), ]
+    verdict <- if (length(sg)) sprintf("SCORIGAMI: %s %d–%d %s", disp(sg[[1]]$m$home), sg[[1]]$m$hg, sg[[1]]$m$ag, disp(sg[[1]]$m$away))
+               else paste0("No scorigami", if (n_team) sprintf(" · %d team scorigami%s", n_team, if (n_team == 1) "" else "s") else "",
+                           sprintf(" · last one: %s %d–%d %s, %s", disp(last_sg$home), last_sg$hg, last_sg$ag, disp(last_sg$away), format(last_sg$date, "%b %Y")))
+    a(class = paste("latest", if (length(sg)) "latest--sg"), href = "#latest",
+      span(class = "latest__tag", "Latest results"),
+      span(class = "latest__score", sprintf("%s · %d result%s", when, length(rr), if (length(rr) == 1) "" else "s")),
+      span(class = "latest__meta", verdict))
+  })
+
+  output$latest <- renderUI({
+    rr <- recent()
+    src <- if (live$ok) sprintf("Live from football-data.org, checked %s UK time.", format(live$at, "%H:%M", tz = "Europe/London"))
+           else sprintf("From the weekly data (latest match %s).", fmt_date(max(dat()$date)))
+    tagList(div(class = "card__head", h2("Latest results"),
+                p(class = "hint", "Every result of the last few days, checked against Premier League history. ", src)),
+            HTML(sprintf('<div class="rs-grid">%s</div>', paste(vapply(rr, result_card, ""), collapse = ""))))
+  })
 
   output$grid_title <- renderText({
     s <- if ((input$season %||% "all") == "all") "All-time" else season_label(as.integer(input$season))
@@ -275,6 +391,7 @@ server <- function(input, output, session) {
 
   output$timeline <- renderUI({
     team <- input$team %||% ""; season <- input$season %||% "all"
+    d <- dat()
     x <- if (nzchar(team)) d[d$home == team | d$away == team, ] else d
     fx <- x[!duplicated(x$key), ]
     first_s <- min(x$season)
@@ -286,7 +403,7 @@ server <- function(input, output, session) {
     else
       div(class = "card__head", h2("When each scoreline first happened"),
           p(class = "hint", sprintf("League-wide, every season. %d in the first season alone; %s.", n_first, late)))
-    tagList(head, HTML(timeline_html(team, season)))
+    tagList(head, HTML(timeline_html(d, team, season)))
   })
 }
 

@@ -34,7 +34,7 @@ jobs:
 
       - name: Install R dependencies
         run: |
-          install.packages(c('dplyr', 'readr', 'lubridate', 'shiny', 'rsconnect'), repos = 'https://cloud.r-project.org')
+          install.packages(c('dplyr', 'readr', 'lubridate', 'shiny', 'rsconnect', 'httr2', 'jsonlite'), repos = 'https://cloud.r-project.org')
         shell: Rscript {0}
 
       - name: Run data update script
@@ -63,8 +63,12 @@ jobs:
 
       - name: Deploy to shinyapps.io
         if: steps.verify_diff.outputs.changed == 'true'
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
         run: |
           cd scorigami
+          # The live results feed reads its token from .Renviron (deployed with the app, never committed)
+          if [ -n "$FOOTBALL_DATA_TOKEN" ]; then printf 'FOOTBALL_DATA_TOKEN=%s\n' "$FOOTBALL_DATA_TOKEN" > .Renviron; fi
           Rscript -e "
             library(rsconnect)
 
@@ -78,7 +82,8 @@ jobs:
             # Deploy the app
             # Upload only what the app needs (no backups or docs)
             rsconnect::deployApp(
-              appFiles = c('app.R', 'pl_history.rds', list.files('www', full.names = TRUE)),
+              appFiles = c('app.R', 'pl_history.rds', 'bot/teams.csv', list.files('www', full.names = TRUE),
+                           if (file.exists('.Renviron')) '.Renviron'),
               appName = 'premier-league-scorigami',
               account = '${{ secrets.SHINYAPPS_ACCOUNT }}',
               forceUpdate = TRUE,

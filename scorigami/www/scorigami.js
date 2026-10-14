@@ -72,6 +72,15 @@
       var target = document.querySelector(".g__cell.is-selected") || document.querySelector(".card--grid");
       target.scrollIntoView({ behavior: smooth, block: "center" }); return;
     }
+    // A latest-result card lights up its square on the grid
+    var card = e.target.closest(".rs[data-score]");
+    if (card && !e.target.closest("a")) {
+      selected = card.dataset.score; mark(); hide();
+      Shiny.setInputValue("cell", selected, { priority: "event" });
+      var sq = document.querySelector(".g__cell.is-selected");
+      if (sq) { sq.scrollIntoView({ behavior: smooth, block: "center" }); sq.focus({ preventScroll: true }); }
+      return;
+    }
     var c = e.target.closest(".g__cell[data-score]");
     if (!c) { hide(); return; }
     selected = c.dataset.score; mark(); hide();

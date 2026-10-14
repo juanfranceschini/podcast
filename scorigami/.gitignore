@@ -29,3 +29,4 @@ Thumbs.db
 # Environment variables (if you add any sensitive configs)
 .Renviron
 .env
+.impeccable/
