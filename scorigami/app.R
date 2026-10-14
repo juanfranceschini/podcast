@@ -396,7 +396,8 @@ server <- function(input, output, session) {
     m <- m[order(m$date, decreasing = TRUE), ]
     heading <- div(class = "detail__head",
       span(class = "detail__score", sprintf("%d–%d", parts[1], parts[2])),
-      span(class = "detail__count", if (!nrow(m)) "Never happened" else if (nrow(m) == 1) "Happened once" else paste(fmt_n(nrow(m)), "matches")))
+      span(class = paste("detail__count", if (nrow(m) == 1) "detail__count--once"),
+           if (!nrow(m)) "Never happened" else if (nrow(m) == 1) "Happened once" else paste(fmt_n(nrow(m)), "matches")))
     back <- tags$button(class = "detail__back", type = "button", "Back to the grid")
     if (!nrow(m)) {
       return(tagList(heading, p(class = "detail__never",
@@ -408,7 +409,7 @@ server <- function(input, output, session) {
     shown <- head(m, 40)
     rows <- vapply(seq_len(nrow(shown)), function(i) {
       x <- shown[i, ]
-      sprintf('<li><span class="mt__date">%s<small>%s</small></span><span class="mt__teams">%s <b>%d–%d</b> %s</span><a class="mt__yt" href="%s" target="_blank" rel="noopener" aria-label="Search highlights for %s">▶</a></li>',
+      sprintf('<li><span class="mt__date">%s<small>%s</small></span><span class="mt__teams">%s <b>%d–%d</b> %s</span><a class="mt__yt" href="%s" target="_blank" rel="noopener" aria-label="Search highlights for %s"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" fill="currentColor"/></svg></a></li>',
               fmt_date(x$date), season_label(x$season), team_html(x$home, team), x$hg, x$ag, team_html(x$away, team), yt(x), esc(score_line(x)))
     }, "")
     # Phones show the latest 5 first; the rest is one tap away
