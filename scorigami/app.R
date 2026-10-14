@@ -1,4 +1,4 @@
-# Premier League Scorigami — every scoreline since 1993: which happened once, which never.
+# Premier League Scorigami — every scoreline since 1992: which happened once, which never.
 # Data: pl_history.rds, refreshed weekly by update_data.R (GitHub Actions).
 # The previous version of this app is in git history (commit b5049f5).
 
@@ -138,7 +138,7 @@ ui <- fluidPage(
   lang = "en",
   tags$head(
     tags$meta(name = "viewport", content = "width=device-width, initial-scale=1"),
-    tags$meta(name = "description", content = "Every Premier League scoreline since 1993. Which have happened only once, and which have never happened at all?"),
+    tags$meta(name = "description", content = "Every Premier League scoreline since 1992. Which have happened only once, and which have never happened at all?"),
     tags$link(rel = "icon", href = "favicon.svg", type = "image/svg+xml"),
     tags$link(rel = "preconnect", href = "https://fonts.googleapis.com"),
     tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap"),
@@ -149,7 +149,7 @@ ui <- fluidPage(
   tags$header(class = "hero",
     div(class = "hero__mark", `aria-hidden` = "true", HTML(paste(rep("<i></i>", 9), collapse = ""))),
     h1("SCORIGAMI"),
-    p(class = "lede", "Every scoreline since 1993. Which have happened only once, and which have ", tags$em("never"), " happened at all?"),
+    p(class = "lede", "Every scoreline since 1992. Which have happened only once, and which have ", tags$em("never"), " happened at all?"),
     div(class = "latest",
       span(class = "latest__tag", "Latest scorigami"),
       span(class = "latest__score", sprintf("%s %d–%d %s", latest_first$home, latest_first$hg, latest_first$ag, latest_first$away)),

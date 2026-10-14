@@ -1,0 +1,61 @@
+name: Scorigami bot
+
+# After each Premier League match, post to X whether the score is a scorigami.
+# Scheduled runs use the repository variable SCORIGAMI_BOT_MODE (dry-run until you set it to "live").
+# Setup: scorigami/bot/README.md
+
+on:
+  schedule:
+    - cron: '*/10 12-23 * * *'   # every 10 minutes, 12:00-23:59 UTC: covers every PL kickoff window, GMT or BST
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run prints the posts, live posts them, bootstrap marks recent matches as handled'
+        type: choice
+        options: [dry-run, live, bootstrap]
+        default: dry-run
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scorigami-repo-writes   # shared with the weekly data update, so the two never race
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scorigami/bot/requirements.txt
+
+      - name: Install
+        run: pip install -q -r scorigami/bot/requirements.txt
+
+      - name: Run the bot
+        working-directory: scorigami
+        env:
+          BOT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || vars.SCORIGAMI_BOT_MODE || 'dry-run' }}
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+        run: python bot/scorigami_bot.py --mode "$BOT_MODE"
+
+      - name: Save what was posted
+        if: always()
+        run: |
+          git config user.name "Scorigami bot"
+          git config user.email "actions@github.com"
+          git add scorigami/bot/state.json scorigami/bot/live_results.csv 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -q -m "🟪 Scorigami bot: $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git pull -q --rebase && git push -q
+          fi

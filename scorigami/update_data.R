@@ -84,3 +84,13 @@ if (nrow(old) && identical(nrow(old), nrow(updated)) && max(old$Date) == max(upd
   cat(sprintf("✅ Saved %s matches (+%d), latest %s\n", format(nrow(updated), big.mark = ","),
               nrow(updated) - nrow(old), max(updated$Date)))
 }
+
+# ---- Plain-text copy for the X bot (bot/scorigami_bot.py), plus tidy its live results ----------
+write_csv(readRDS(history_file) |> select(Date, Home, Away, HG, AG), "pl_history.csv")
+live_file <- "bot/live_results.csv"
+if (file.exists(live_file)) {
+  live <- read_csv(live_file, show_col_types = FALSE, col_types = cols(.default = "c"))
+  have <- with(readRDS(history_file), paste(season_of(Date), Home, Away))
+  keep <- live[!paste(season_of(as_date(live$Date)), live$Home, live$Away) %in% have, ]
+  if (nrow(keep) < nrow(live)) { write_csv(keep, live_file, na = ""); cat(sprintf("🧹 %d live results now in the history\n", nrow(live) - nrow(keep))) }
+}

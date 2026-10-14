@@ -8,6 +8,10 @@ on:
   # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
 
+concurrency:
+  group: scorigami-repo-writes   # shared with the Scorigami bot, so the two never race
+  cancel-in-progress: false
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
@@ -50,8 +54,9 @@ jobs:
           cd scorigami
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add pl_history.rds
+          git add pl_history.rds pl_history.csv bot/live_results.csv
           git commit -m "🤖 Auto-update: Premier League data ($(date +'%Y-%m-%d'))"
+          git pull --rebase
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
