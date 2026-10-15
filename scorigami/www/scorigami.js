@@ -88,6 +88,15 @@
     if (window.innerWidth < 900) revealDetail();
   });
 
+  // Browsers without the native popover: open and close the definition by hand
+  if (!HTMLElement.prototype.hasOwnProperty("popover")) {
+    document.addEventListener("DOMContentLoaded", function () { var d = document.getElementById("define-pop"); if (d) d.hidden = true; });
+    document.addEventListener("click", function (e) {
+      var t = e.target.closest("[popovertarget]"); if (!t) return;
+      var d = document.getElementById(t.getAttribute("popovertarget")); if (d) d.hidden = t.getAttribute("popovertargetaction") === "hide" ? true : !d.hidden;
+    });
+  }
+
   // Re-apply the selection whenever the grid is re-rendered
   document.addEventListener("DOMContentLoaded", function () {
     selected = new URLSearchParams(location.search).get("score") || null;
