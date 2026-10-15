@@ -1,5 +1,7 @@
 # Premier League Scorigami bot
 
+Scorigami, a final score that has never happened before, was coined by [Jon Bois](https://www.sbnation.com/2014/9/8/6110147/pete-carroll-seahawks-scoragami-weird-nfl-scores) (SB Nation, 2014) for the NFL. This bot is the Premier League take on [@NFL_Scorigami](https://x.com/NFL_Scorigami).
+
 After every Premier League match, the bot posts to X whether the final score is a **scorigami** (a scoreline never seen in Premier League history), a **team scorigami** (the first time a club has had that result at that venue), or when the same score last happened.
 
 ```

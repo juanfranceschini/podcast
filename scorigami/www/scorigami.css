@@ -262,3 +262,10 @@ a.latest:hover { color: inherit; background: rgba(234, 0, 217, .16); border-colo
 /* Phones: four-digit counts switch to their short form so they fit the square */
 .n-short { display: none; }
 @media (max-width: 480px) { .n-long { display: none; } .n-short { display: inline; } }
+
+/* The definition under the title: what a scorigami is, in dictionary form */
+.define { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: .2rem .55rem; margin: 0 auto .55rem; font-size: clamp(1.1rem, 2vw, 1.35rem); color: var(--text); }
+.define__word { font-weight: 800; letter-spacing: .01em; }
+.define__pos { font-family: var(--mono); font-size: .78rem; font-style: italic; color: var(--text-3); }
+.lede a { color: inherit; text-decoration-color: var(--magenta); text-underline-offset: 3px; font-weight: 600; }
+.lede a:hover { color: var(--pink-ink, var(--magenta)); }

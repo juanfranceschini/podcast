@@ -246,7 +246,7 @@ ui <- fluidPage(
   lang = "en",
   tags$head(
     tags$meta(name = "viewport", content = "width=device-width, initial-scale=1"),
-    tags$meta(name = "description", content = "Every Premier League scoreline since 1992. Which have happened only once, and which have never happened at all?"),
+    tags$meta(name = "description", content = "Scorigami, a final score that has never happened before, coined by Jon Bois for the NFL. The Premier League edition: every scoreline since 1992."),
     tags$link(rel = "icon", href = "favicon.svg", type = "image/svg+xml"),
     tags$link(rel = "preconnect", href = "https://fonts.googleapis.com"),
     tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=DM+Mono:wght@400;500&display=swap"),
@@ -258,7 +258,13 @@ ui <- fluidPage(
   tags$header(class = "hero",
     div(class = "hero__mark", `aria-hidden` = "true", HTML(paste(rep("<i></i>", 9), collapse = ""))),
     h1("SCORIGAMI"),
-    p(class = "lede", "Every scoreline since 1992. Which have happened only once, and which have ", tags$em("never"), " happened at all?"),
+    # What a scorigami is, and whose idea it was, before anything else
+    p(class = "define", span(class = "define__word", "scor·i·ga·mi"), span(class = "define__pos", "noun"),
+      span(class = "define__text", "a final score that has never happened before.")),
+    p(class = "lede", "Coined by ",
+      a(href = "https://www.sbnation.com/2014/9/8/6110147/pete-carroll-seahawks-scoragami-weird-nfl-scores", target = "_blank", rel = "noopener", "Jon Bois"),
+      " for the NFL. Here is every Premier League scoreline since 1992: pink squares happened only once, and the empty slots are still ",
+      tags$em("waiting", .noWS = "after"), "."),
     div(class = "ticker", uiOutput("ticker")),
     div(class = "records-wrap", uiOutput("records"))
   ),
@@ -291,7 +297,11 @@ ui <- fluidPage(
   tags$footer(class = "foot",
     p("Built by ", a(href = "https://jafranceschini.quarto.pub/juan-franceschini-lab/", target = "_blank", rel = "noopener", "Juan Franceschini"),
       " · a White Belt project · ", a(href = "https://www.linkedin.com/in/juan-franceschini-uy/", target = "_blank", rel = "noopener", "LinkedIn")),
-    p(class = "foot__small", "Results from football-data.co.uk, refreshed weekly, and live from football-data.org. Scorelines are always home–away. Not affiliated with the Premier League."))
+    p(class = "foot__small", "Scorigami was coined by ",
+      a(href = "https://www.sbnation.com/2014/9/8/6110147/pete-carroll-seahawks-scoragami-weird-nfl-scores", target = "_blank", rel = "noopener", "Jon Bois"),
+      " (SB Nation, 2014) for NFL scores, which read winner–loser. Here every scoreline reads home–away, so 2–1 and 1–2 are different squares. The live feed is inspired by ",
+      a(href = "https://x.com/NFL_Scorigami", target = "_blank", rel = "noopener", "@NFL_Scorigami", .noWS = "after"), "."),
+    p(class = "foot__small", "Results from football-data.co.uk, refreshed weekly, and live from football-data.org. Not affiliated with the Premier League."))
 )
 
 # ---- server ----------------------------------------------------------------------------------
