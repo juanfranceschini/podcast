@@ -1,0 +1,7 @@
+# Raw downloads (about 1.4 GB) and intermediate tables: rebuild with get_data.sh and prep.R
+data/raw/
+data/build/
+rsconnect/
+.Rhistory
+__pycache__/
+.impeccable/
