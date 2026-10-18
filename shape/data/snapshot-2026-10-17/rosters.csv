@@ -1,0 +1,175 @@
+league,team,team_id,rows_returned,source_url,retrieved_at_utc
+NFL,Arizona Cardinals,22,84,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/22/roster,2026-10-17T20:28:51+00:00
+NFL,Atlanta Falcons,1,79,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/1/roster,2026-10-17T20:28:51+00:00
+NFL,Baltimore Ravens,33,78,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/33/roster,2026-10-17T20:28:51+00:00
+NFL,Buffalo Bills,2,74,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/2/roster,2026-10-17T20:28:51+00:00
+NFL,Carolina Panthers,29,79,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/29/roster,2026-10-17T20:28:51+00:00
+NFL,Chicago Bears,3,83,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/3/roster,2026-10-17T20:28:51+00:00
+NFL,Cincinnati Bengals,4,74,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/4/roster,2026-10-17T20:28:56+00:00
+NFL,Cleveland Browns,5,80,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/5/roster,2026-10-17T20:28:56+00:00
+NFL,Dallas Cowboys,6,79,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/6/roster,2026-10-17T20:28:56+00:00
+NFL,Denver Broncos,7,79,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/7/roster,2026-10-17T20:28:56+00:00
+NFL,Detroit Lions,8,82,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/8/roster,2026-10-17T20:28:56+00:00
+NFL,Green Bay Packers,9,81,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/9/roster,2026-10-17T20:28:56+00:00
+NFL,Houston Texans,34,87,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/34/roster,2026-10-17T20:29:00+00:00
+NFL,Indianapolis Colts,11,77,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/11/roster,2026-10-17T20:29:00+00:00
+NFL,Jacksonville Jaguars,30,80,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/30/roster,2026-10-17T20:29:00+00:00
+NFL,Kansas City Chiefs,12,77,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/12/roster,2026-10-17T20:29:00+00:00
+NFL,Las Vegas Raiders,13,80,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/13/roster,2026-10-17T20:29:00+00:00
+NFL,Los Angeles Chargers,24,80,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/24/roster,2026-10-17T20:29:00+00:00
+NFL,Los Angeles Rams,14,80,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/14/roster,2026-10-17T20:29:05+00:00
+NFL,Miami Dolphins,15,77,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/15/roster,2026-10-17T20:29:05+00:00
+NFL,Minnesota Vikings,16,76,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/16/roster,2026-10-17T20:29:05+00:00
+NFL,New England Patriots,17,84,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/17/roster,2026-10-17T20:29:05+00:00
+NFL,New Orleans Saints,18,81,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/18/roster,2026-10-17T20:29:05+00:00
+NFL,New York Giants,19,83,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/19/roster,2026-10-17T20:29:05+00:00
+NFL,New York Jets,20,82,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/20/roster,2026-10-17T20:29:09+00:00
+NFL,Philadelphia Eagles,21,82,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/21/roster,2026-10-17T20:29:09+00:00
+NFL,Pittsburgh Steelers,23,80,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/23/roster,2026-10-17T20:29:09+00:00
+NFL,San Francisco 49ers,25,90,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/25/roster,2026-10-17T20:29:09+00:00
+NFL,Seattle Seahawks,26,82,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/26/roster,2026-10-17T20:29:09+00:00
+NFL,Tampa Bay Buccaneers,27,74,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/27/roster,2026-10-17T20:29:09+00:00
+NFL,Tennessee Titans,10,83,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/10/roster,2026-10-17T20:29:14+00:00
+NFL,Washington Commanders,28,77,https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/28/roster,2026-10-17T20:29:14+00:00
+NBA,Atlanta Hawks,1,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/1/roster,2026-10-17T20:29:14+00:00
+NBA,Boston Celtics,2,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/2/roster,2026-10-17T20:29:14+00:00
+NBA,Brooklyn Nets,17,18,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/17/roster,2026-10-17T20:29:14+00:00
+NBA,Charlotte Hornets,30,20,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/30/roster,2026-10-17T20:29:14+00:00
+NBA,Chicago Bulls,4,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/4/roster,2026-10-17T20:29:19+00:00
+NBA,Cleveland Cavaliers,5,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/5/roster,2026-10-17T20:29:19+00:00
+NBA,Dallas Mavericks,6,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/6/roster,2026-10-17T20:29:19+00:00
+NBA,Denver Nuggets,7,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/7/roster,2026-10-17T20:29:19+00:00
+NBA,Detroit Pistons,8,19,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/8/roster,2026-10-17T20:29:19+00:00
+NBA,Golden State Warriors,9,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/9/roster,2026-10-17T20:29:19+00:00
+NBA,Houston Rockets,10,20,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/10/roster,2026-10-17T20:29:23+00:00
+NBA,Indiana Pacers,11,18,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/11/roster,2026-10-17T20:29:23+00:00
+NBA,LA Clippers,12,23,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/12/roster,2026-10-17T20:29:23+00:00
+NBA,Los Angeles Lakers,13,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/13/roster,2026-10-17T20:29:23+00:00
+NBA,Memphis Grizzlies,29,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/29/roster,2026-10-17T20:29:23+00:00
+NBA,Miami Heat,14,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/14/roster,2026-10-17T20:29:23+00:00
+NBA,Milwaukee Bucks,15,22,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/15/roster,2026-10-17T20:29:28+00:00
+NBA,Minnesota Timberwolves,16,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/16/roster,2026-10-17T20:29:28+00:00
+NBA,New Orleans Pelicans,3,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/3/roster,2026-10-17T20:29:28+00:00
+NBA,New York Knicks,18,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/18/roster,2026-10-17T20:29:28+00:00
+NBA,Oklahoma City Thunder,25,19,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/25/roster,2026-10-17T20:29:28+00:00
+NBA,Orlando Magic,19,18,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/19/roster,2026-10-17T20:29:28+00:00
+NBA,Philadelphia 76ers,20,23,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/20/roster,2026-10-17T20:29:32+00:00
+NBA,Phoenix Suns,21,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/21/roster,2026-10-17T20:29:32+00:00
+NBA,Portland Trail Blazers,22,19,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/22/roster,2026-10-17T20:29:32+00:00
+NBA,Sacramento Kings,23,20,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/23/roster,2026-10-17T20:29:32+00:00
+NBA,San Antonio Spurs,24,17,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/24/roster,2026-10-17T20:29:32+00:00
+NBA,Toronto Raptors,28,23,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/28/roster,2026-10-17T20:29:32+00:00
+NBA,Utah Jazz,26,21,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/26/roster,2026-10-17T20:29:37+00:00
+NBA,Washington Wizards,27,24,https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/27/roster,2026-10-17T20:29:37+00:00
+MLB,Arizona Diamondbacks,29,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/29/roster,2026-10-17T20:29:37+00:00
+MLB,Athletics,11,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/11/roster,2026-10-17T20:29:37+00:00
+MLB,Atlanta Braves,15,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/15/roster,2026-10-17T20:29:37+00:00
+MLB,Baltimore Orioles,1,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/1/roster,2026-10-17T20:29:37+00:00
+MLB,Boston Red Sox,2,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/2/roster,2026-10-17T20:29:41+00:00
+MLB,Chicago Cubs,16,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/16/roster,2026-10-17T20:29:41+00:00
+MLB,Chicago White Sox,4,26,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/4/roster,2026-10-17T20:29:41+00:00
+MLB,Cincinnati Reds,17,38,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/17/roster,2026-10-17T20:29:41+00:00
+MLB,Cleveland Guardians,5,26,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/5/roster,2026-10-17T20:29:41+00:00
+MLB,Colorado Rockies,27,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/27/roster,2026-10-17T20:29:42+00:00
+MLB,Detroit Tigers,6,41,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/6/roster,2026-10-17T20:29:46+00:00
+MLB,Houston Astros,18,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/18/roster,2026-10-17T20:29:46+00:00
+MLB,Kansas City Royals,7,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/7/roster,2026-10-17T20:29:46+00:00
+MLB,Los Angeles Angels,3,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/3/roster,2026-10-17T20:29:46+00:00
+MLB,Los Angeles Dodgers,19,28,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/19/roster,2026-10-17T20:29:46+00:00
+MLB,Miami Marlins,28,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/28/roster,2026-10-17T20:29:46+00:00
+MLB,Milwaukee Brewers,8,26,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/8/roster,2026-10-17T20:29:50+00:00
+MLB,Minnesota Twins,9,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/9/roster,2026-10-17T20:29:50+00:00
+MLB,New York Mets,21,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/21/roster,2026-10-17T20:29:50+00:00
+MLB,New York Yankees,10,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/10/roster,2026-10-17T20:29:51+00:00
+MLB,Philadelphia Phillies,22,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/22/roster,2026-10-17T20:29:50+00:00
+MLB,Pittsburgh Pirates,23,38,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/23/roster,2026-10-17T20:29:51+00:00
+MLB,San Diego Padres,25,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/25/roster,2026-10-17T20:29:55+00:00
+MLB,San Francisco Giants,26,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/26/roster,2026-10-17T20:29:55+00:00
+MLB,Seattle Mariners,12,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/12/roster,2026-10-17T20:29:55+00:00
+MLB,St. Louis Cardinals,24,39,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/24/roster,2026-10-17T20:29:55+00:00
+MLB,Tampa Bay Rays,30,26,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/30/roster,2026-10-17T20:29:55+00:00
+MLB,Texas Rangers,13,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/13/roster,2026-10-17T20:29:55+00:00
+MLB,Toronto Blue Jays,14,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/14/roster,2026-10-17T20:30:06+00:00
+MLB,Washington Nationals,20,40,https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/teams/20/roster,2026-10-17T20:30:06+00:00
+NHL,Anaheim Ducks,25,29,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/25/roster,2026-10-17T20:30:06+00:00
+NHL,Boston Bruins,1,23,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/1/roster,2026-10-17T20:30:06+00:00
+NHL,Buffalo Sabres,2,29,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/2/roster,2026-10-17T20:30:06+00:00
+NHL,Calgary Flames,3,24,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/3/roster,2026-10-17T20:30:06+00:00
+NHL,Carolina Hurricanes,7,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/7/roster,2026-10-17T20:30:12+00:00
+NHL,Chicago Blackhawks,4,26,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/4/roster,2026-10-17T20:30:12+00:00
+NHL,Colorado Avalanche,17,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/17/roster,2026-10-17T20:30:12+00:00
+NHL,Columbus Blue Jackets,29,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/29/roster,2026-10-17T20:30:12+00:00
+NHL,Dallas Stars,9,27,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/9/roster,2026-10-17T20:30:12+00:00
+NHL,Detroit Red Wings,5,27,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/5/roster,2026-10-17T20:30:12+00:00
+NHL,Edmonton Oilers,6,29,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/6/roster,2026-10-17T20:30:17+00:00
+NHL,Florida Panthers,26,24,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/26/roster,2026-10-17T20:30:17+00:00
+NHL,Los Angeles Kings,8,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/8/roster,2026-10-17T20:30:17+00:00
+NHL,Minnesota Wild,30,28,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/30/roster,2026-10-17T20:30:17+00:00
+NHL,Montreal Canadiens,10,26,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/10/roster,2026-10-17T20:30:17+00:00
+NHL,Nashville Predators,27,24,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/27/roster,2026-10-17T20:30:17+00:00
+NHL,New Jersey Devils,11,26,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/11/roster,2026-10-17T20:30:21+00:00
+NHL,New York Islanders,12,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/12/roster,2026-10-17T20:30:22+00:00
+NHL,New York Rangers,13,29,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/13/roster,2026-10-17T20:30:22+00:00
+NHL,Ottawa Senators,14,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/14/roster,2026-10-17T20:30:21+00:00
+NHL,Philadelphia Flyers,15,26,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/15/roster,2026-10-17T20:30:22+00:00
+NHL,Pittsburgh Penguins,16,27,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/16/roster,2026-10-17T20:30:21+00:00
+NHL,San Jose Sharks,18,29,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/18/roster,2026-10-17T20:30:26+00:00
+NHL,Seattle Kraken,124292,26,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/124292/roster,2026-10-17T20:30:26+00:00
+NHL,St. Louis Blues,19,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/19/roster,2026-10-17T20:30:26+00:00
+NHL,Tampa Bay Lightning,20,24,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/20/roster,2026-10-17T20:30:26+00:00
+NHL,Toronto Maple Leafs,21,27,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/21/roster,2026-10-17T20:30:26+00:00
+NHL,Utah Mammoth,129764,24,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/129764/roster,2026-10-17T20:30:26+00:00
+NHL,Vancouver Canucks,22,29,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/22/roster,2026-10-17T20:30:31+00:00
+NHL,Vegas Golden Knights,37,31,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/37/roster,2026-10-17T20:30:31+00:00
+NHL,Washington Capitals,23,25,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/23/roster,2026-10-17T20:30:31+00:00
+NHL,Winnipeg Jets,28,27,https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/teams/28/roster,2026-10-17T20:30:31+00:00
+MLS,Atlanta United FC,18418,32,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/18418/roster,2026-10-17T20:30:31+00:00
+MLS,Austin FC,20906,27,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/20906/roster,2026-10-17T20:30:31+00:00
+MLS,CF Montréal,9720,29,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/9720/roster,2026-10-17T20:30:36+00:00
+MLS,Charlotte FC,21300,31,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/21300/roster,2026-10-17T20:30:36+00:00
+MLS,Chicago Fire FC,182,30,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/182/roster,2026-10-17T20:30:36+00:00
+MLS,Colorado Rapids,184,33,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/184/roster,2026-10-17T20:30:36+00:00
+MLS,Columbus Crew,183,33,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/183/roster,2026-10-17T20:30:36+00:00
+MLS,D.C. United,193,26,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/193/roster,2026-10-17T20:30:36+00:00
+MLS,FC Cincinnati,18267,30,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/18267/roster,2026-10-17T20:30:40+00:00
+MLS,FC Dallas,185,35,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/185/roster,2026-10-17T20:30:40+00:00
+MLS,Houston Dynamo FC,6077,27,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/6077/roster,2026-10-17T20:30:40+00:00
+MLS,Inter Miami CF,20232,34,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/20232/roster,2026-10-17T20:30:40+00:00
+MLS,LA Galaxy,187,34,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/187/roster,2026-10-17T20:30:41+00:00
+MLS,LAFC,18966,32,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/18966/roster,2026-10-17T20:30:40+00:00
+MLS,Minnesota United FC,17362,30,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/17362/roster,2026-10-17T20:30:45+00:00
+MLS,Nashville SC,18986,30,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/18986/roster,2026-10-17T20:30:45+00:00
+MLS,New England Revolution,189,39,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/189/roster,2026-10-17T20:30:45+00:00
+MLS,New York City FC,17606,36,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/17606/roster,2026-10-17T20:30:46+00:00
+MLS,Orlando City SC,12011,31,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/12011/roster,2026-10-17T20:30:45+00:00
+MLS,Philadelphia Union,10739,29,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/10739/roster,2026-10-17T20:30:45+00:00
+MLS,Portland Timbers,9723,29,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/9723/roster,2026-10-17T20:30:50+00:00
+MLS,Real Salt Lake,4771,41,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/4771/roster,2026-10-17T20:30:50+00:00
+MLS,Red Bull New York,190,33,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/190/roster,2026-10-17T20:30:49+00:00
+MLS,San Diego FC,22529,30,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/22529/roster,2026-10-17T20:30:50+00:00
+MLS,San Jose Earthquakes,191,33,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/191/roster,2026-10-17T20:30:50+00:00
+MLS,Seattle Sounders FC,9726,33,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/9726/roster,2026-10-17T20:30:50+00:00
+MLS,Sporting Kansas City,186,32,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/186/roster,2026-10-17T20:30:54+00:00
+MLS,St. Louis CITY SC,21812,35,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/21812/roster,2026-10-17T20:30:54+00:00
+MLS,Toronto FC,7318,37,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/7318/roster,2026-10-17T20:30:54+00:00
+MLS,Vancouver Whitecaps,9727,33,https://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/teams/9727/roster,2026-10-17T20:30:54+00:00
+Premier League,AFC Bournemouth,349,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/349/roster,2026-10-17T20:30:54+00:00
+Premier League,Arsenal,359,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/359/roster,2026-10-17T20:30:54+00:00
+Premier League,Aston Villa,362,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/362/roster,2026-10-17T20:30:59+00:00
+Premier League,Brentford,337,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/337/roster,2026-10-17T20:30:59+00:00
+Premier League,Brighton & Hove Albion,331,33,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/331/roster,2026-10-17T20:30:59+00:00
+Premier League,Chelsea,363,30,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/363/roster,2026-10-17T20:30:59+00:00
+Premier League,Coventry City,388,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/388/roster,2026-10-17T20:30:59+00:00
+Premier League,Crystal Palace,384,32,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/384/roster,2026-10-17T20:30:59+00:00
+Premier League,Everton,368,24,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/368/roster,2026-10-17T20:31:03+00:00
+Premier League,Fulham,370,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/370/roster,2026-10-17T20:31:03+00:00
+Premier League,Hull City,306,34,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/306/roster,2026-10-17T20:31:04+00:00
+Premier League,Ipswich Town,373,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/373/roster,2026-10-17T20:31:03+00:00
+Premier League,Leeds United,357,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/357/roster,2026-10-17T20:31:03+00:00
+Premier League,Liverpool,364,33,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/364/roster,2026-10-17T20:31:03+00:00
+Premier League,Manchester City,382,27,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/382/roster,2026-10-17T20:31:08+00:00
+Premier League,Manchester United,360,31,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/360/roster,2026-10-17T20:31:08+00:00
+Premier League,Newcastle United,361,31,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/361/roster,2026-10-17T20:31:08+00:00
+Premier League,Nottingham Forest,393,24,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/393/roster,2026-10-17T20:31:08+00:00
+Premier League,Sunderland,366,32,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/366/roster,2026-10-17T20:31:08+00:00
+Premier League,Tottenham Hotspur,367,29,https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/teams/367/roster,2026-10-17T20:31:08+00:00

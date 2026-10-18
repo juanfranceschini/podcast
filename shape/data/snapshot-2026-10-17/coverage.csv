@@ -1,0 +1,7 @@
+league,teams_listed,teams_fetched,athlete_league_records,usable_height_weight,coverage_pct,excluded_records,mean_height_cm,mean_weight_kg,seasons
+NFL,32,32,2564,2564,100.0,0,188.51,110.96,2026
+NBA,30,30,624,623,99.84,1,200.05,98.43,2026-27
+MLB,30,30,1122,1122,100.0,0,186.56,94.41,2026
+NHL,32,32,841,841,100.0,0,186.89,90.91,2026-27
+MLS,30,30,964,773,80.19,191,181.58,75.01,2026 MLS
+Premier League,20,20,592,526,88.85,66,183.69,75.76,2026-27 English Premier League

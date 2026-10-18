@@ -1,0 +1,47 @@
+league,position,n,mean_height_cm,mean_weight_kg
+MLB,Catcher,77,182.72,97.46
+MLB,Center Fielder,54,182.88,90.12
+MLB,Designated Hitter,39,184.31,97.42
+MLB,First Baseman,45,185.76,99.32
+MLB,Left Fielder,64,182.84,91.41
+MLB,Outfielder,4,184.15,86.64
+MLB,Relief Pitcher,374,189.57,96.29
+MLB,Right Fielder,60,184.11,94.13
+MLB,Second Baseman,63,178.85,85.95
+MLB,Shortstop,60,181.91,87.63
+MLB,Starting Pitcher,227,190.28,95.4
+MLB,Third Baseman,55,183.11,92.67
+MLS,Defender,264,182.85,76.23
+MLS,Forward,190,180.23,73.6
+MLS,Goalkeeper,84,189.87,84.3
+MLS,Midfielder,235,178.28,71.47
+NBA,Center,94,211.63,113.08
+NBA,Forward,247,203.4,101.98
+NBA,Guard,282,193.27,90.44
+NFL,Center,82,193.01,139.13
+NFL,Cornerback,280,182.28,87.05
+NFL,Defensive Back,4,187.96,91.17
+NFL,Defensive End,156,193.07,121.58
+NFL,Defensive Tackle,227,191.2,139.91
+NFL,Fullback,19,187.83,116.0
+NFL,Guard,161,194.55,143.63
+NFL,Linebacker,353,188.64,109.16
+NFL,Long Snapper,34,188.71,109.13
+NFL,Offensive Lineman,3,196.43,147.12
+NFL,Offensive Tackle,198,198.06,144.2
+NFL,Place Kicker,35,183.32,88.77
+NFL,Punter,34,188.93,97.7
+NFL,Quarterback,109,189.52,99.74
+NFL,Running Back,177,179.29,96.09
+NFL,Safety,198,183.61,92.48
+NFL,Tight End,180,194.75,112.92
+NFL,Wide Receiver,314,184.24,89.58
+NHL,Center,244,185.94,89.47
+NHL,Defense,279,188.12,92.46
+NHL,Goaltender,74,190.5,91.67
+NHL,Left Wing,126,185.78,90.96
+NHL,Right Wing,118,184.86,89.71
+Premier League,Defender,171,185.32,77.41
+Premier League,Forward,127,182.3,74.16
+Premier League,Goalkeeper,60,190.71,83.0
+Premier League,Midfielder,168,180.58,72.71
